@@ -17,7 +17,14 @@
                                         CanContentScroll="{TemplateBinding CanContentScroll}"
                                         Content="{TemplateBinding Content}"
                                         ContentTemplate="{TemplateBinding ContentTemplate}" />
+                <!--
+                    Margem negativa de propósito: a barra sai da grade e vai
+                    flutuar no respiro da janela. Sobreposta, ela encostava na
+                    última coluna de cards; reservar espaço para ela custaria
+                    uma coluna inteira.
+                -->
                 <ScrollBar x:Name="PART_VerticalScrollBar"
+                           Margin="0,0,-16,0"
                            HorizontalAlignment="Right"
                            Style="{StaticResource ThinScrollBar}"
                            Maximum="{TemplateBinding ScrollableHeight}"
@@ -51,7 +58,7 @@
 
         <!--  ============ ABA ============  -->
         <Style x:Key="TabItem" TargetType="ListBoxItem">
-            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="Margin" Value="0,0,8,0" />
             <Setter Property="Cursor" Value="Hand" />
             <EventSetter Event="MouseRightButtonUp" Handler="TabItem_MouseRightButtonUp" />
             <Setter Property="Template">
@@ -59,29 +66,56 @@
                     <ControlTemplate TargetType="ListBoxItem">
                         <Border x:Name="Pill"
                                 Height="30"
-                                Padding="13,0"
-                                Background="{StaticResource CardBg}"
-                                BorderBrush="{StaticResource CardBorder}"
+                                Padding="12,0"
+                                Background="{StaticResource TabBg}"
+                                BorderBrush="{StaticResource TabBorder}"
                                 BorderThickness="1"
                                 CornerRadius="{StaticResource RadiusTab}">
-                            <TextBlock x:Name="Label"
-                                       VerticalAlignment="Center"
-                                       FontSize="{StaticResource SizeBody}"
-                                       FontWeight="Medium"
-                                       Foreground="{StaticResource TextLabel}"
-                                       Text="{Binding Name}" />
+                            <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                                <!--  o mesmo bloco do card, em miniatura: 14px com um ponto de 5px  -->
+                                <Border x:Name="Tile"
+                                        Width="14"
+                                        Height="14"
+                                        Background="{StaticResource TileBg}"
+                                        CornerRadius="{StaticResource RadiusTabTile}">
+                                    <Border x:Name="Dot"
+                                            Width="5"
+                                            Height="5"
+                                            Background="{StaticResource Glyph}"
+                                            CornerRadius="1" />
+                                </Border>
+                                <TextBlock x:Name="Label"
+                                           Margin="8,0,0,0"
+                                           VerticalAlignment="Center"
+                                           FontSize="{StaticResource SizeTab}"
+                                           FontWeight="Medium"
+                                           Foreground="{StaticResource TabLabel}"
+                                           Text="{Binding Name}" />
+                                <TextBlock x:Name="Tally"
+                                           Margin="8,0,0,0"
+                                           VerticalAlignment="Center"
+                                           FontFamily="{StaticResource MonoFont}"
+                                           FontSize="{StaticResource SizeKey}"
+                                           Foreground="{StaticResource TabCount}"
+                                           Text="{Binding Count}" />
+                            </StackPanel>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Pill" Property="Background" Value="{StaticResource CardBgHover}" />
-                                <Setter TargetName="Pill" Property="BorderBrush" Value="{StaticResource CardBorderHover}" />
+                                <Setter TargetName="Pill" Property="Background" Value="{StaticResource TabBgHover}" />
+                                <Setter TargetName="Pill" Property="BorderBrush" Value="{StaticResource TabBorderHover}" />
+                                <Setter TargetName="Tile" Property="Background" Value="{StaticResource TileBgHover}" />
+                                <Setter TargetName="Dot" Property="Background" Value="{StaticResource GlyphHover}" />
                                 <Setter TargetName="Label" Property="Foreground" Value="{StaticResource TextPrimary}" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Pill" Property="Background" Value="{StaticResource CardBgSelected}" />
-                                <Setter TargetName="Pill" Property="BorderBrush" Value="{StaticResource CardBorderSelected}" />
+                                <Setter TargetName="Pill" Property="Background" Value="{StaticResource TabBgSelected}" />
+                                <Setter TargetName="Pill" Property="BorderBrush" Value="{StaticResource TabBorderSelected}" />
+                                <Setter TargetName="Tile" Property="Background" Value="{StaticResource TileBgSelected}" />
+                                <Setter TargetName="Dot" Property="Background" Value="{StaticResource GlyphSelected}" />
                                 <Setter TargetName="Label" Property="Foreground" Value="{StaticResource TextStrong}" />
                                 <Setter TargetName="Label" Property="FontWeight" Value="SemiBold" />
+                                <Setter TargetName="Tally" Property="Foreground" Value="{StaticResource TabCountSelected}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -176,11 +210,11 @@
                         </ControlTemplate.Resources>
 
                         <Grid>
-                            <!--  box-shadow: 0 0 0 2px rgba(255,255,255,0.05)  -->
+                            <!--  box-shadow: 0 0 0 3px rgba(255,255,255,0.035)  -->
                             <Border x:Name="SelectRing"
-                                    Margin="-2"
+                                    Margin="-3"
                                     BorderBrush="{StaticResource CardRing}"
-                                    BorderThickness="2"
+                                    BorderThickness="3"
                                     CornerRadius="{StaticResource RadiusCardRing}"
                                     Opacity="0" />
 
@@ -203,9 +237,11 @@
                                     CornerRadius="{StaticResource RadiusCard}"
                                     Opacity="0" />
 
-                            <!--  padding: 24px 12px 18px  ·  gap: 14px  -->
-                            <StackPanel Margin="12,24,12,18" VerticalAlignment="Top">
-                                <Grid Width="44" Height="44" HorizontalAlignment="Center">
+                            <!--  padding: 20px 8px 15px  ·  gap: 12px  -->
+                            <StackPanel Margin="8,20,8,15" VerticalAlignment="Top">
+                                <Grid Width="{StaticResource TileSize}"
+                                      Height="{StaticResource TileSize}"
+                                      HorizontalAlignment="Center">
                                     <Border x:Name="TileNormal"
                                             Background="{StaticResource TileBg}"
                                             BorderBrush="{StaticResource TileBorder}"
@@ -234,8 +270,8 @@
                                                Text="{Binding Initial}"
                                                Visibility="{Binding Icon, Converter={StaticResource NullToVisInverted}}" />
 
-                                    <Image Width="28"
-                                           Height="28"
+                                    <Image Width="26"
+                                           Height="26"
                                            RenderOptions.BitmapScalingMode="HighQuality"
                                            Source="{Binding Icon}"
                                            Stretch="Uniform"
@@ -243,12 +279,12 @@
                                 </Grid>
 
                                 <TextBlock x:Name="Label"
-                                           Height="32"
-                                           Margin="0,14,0,0"
-                                           FontSize="{StaticResource SizeBody}"
+                                           Height="30"
+                                           Margin="0,12,0,0"
+                                           FontSize="{StaticResource SizeCard}"
                                            FontWeight="Medium"
                                            Foreground="{StaticResource TextLabel}"
-                                           LineHeight="16"
+                                           LineHeight="15"
                                            LineStackingStrategy="BlockLineHeight"
                                            Text="{Binding Name}"
                                            TextAlignment="Center"
@@ -293,7 +329,7 @@
 
     <!--  ================= MODAL =================  -->
     <Border x:Name="Shell"
-            Padding="30,30,30,24"
+            Padding="24,22,24,18"
             Background="{StaticResource Surface}"
             BorderBrush="{StaticResource SurfaceBorder}"
             BorderThickness="1"
@@ -306,6 +342,9 @@
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <!--  busca  -->
+                <RowDefinition Height="Auto" />
+                <!--  abas  -->
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
@@ -318,15 +357,14 @@
                   MouseLeftButtonDown="Header_MouseLeftButtonDown"
                   MouseRightButtonUp="Header_MouseRightButtonUp">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" MinWidth="16" />
-                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <!--  com a busca fora do cabeçalho, o título tem o dobro do espaço  -->
                     <TextBlock x:Name="TitleText"
-                               MaxWidth="170"
+                               MaxWidth="300"
                                HorizontalAlignment="Left"
                                FontSize="{StaticResource SizeTitle}"
                                FontWeight="SemiBold"
@@ -334,7 +372,7 @@
                                Text="Folder Hub"
                                TextTrimming="CharacterEllipsis" />
                     <TextBlock x:Name="SubtitleText"
-                               MaxWidth="180"
+                               MaxWidth="320"
                                Margin="0,3,0,0"
                                HorizontalAlignment="Left"
                                FontSize="{StaticResource SizeBody}"
@@ -343,42 +381,7 @@
                                TextTrimming="CharacterEllipsis" />
                 </StackPanel>
 
-                <Border Grid.Column="2"
-                        Width="176"
-                        Height="30"
-                        Margin="0,0,8,0"
-                        VerticalAlignment="Center"
-                        Background="{StaticResource ControlBg}"
-                        BorderBrush="{StaticResource ControlBorder}"
-                        BorderThickness="1"
-                        CornerRadius="{StaticResource RadiusControl}">
-                    <Grid Margin="9,0,9,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0"
-                                   Margin="0,0,7,0"
-                                   VerticalAlignment="Center"
-                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                   FontSize="{StaticResource SizeGlyph}"
-                                   Foreground="{StaticResource TextMuted}"
-                                   Text="&#xE721;" />
-                        <Grid Grid.Column="1">
-                            <TextBlock x:Name="SearchPlaceholder"
-                                       VerticalAlignment="Center"
-                                       FontSize="{StaticResource SizeBody}"
-                                       Foreground="{StaticResource TextFaint}"
-                                       IsHitTestVisible="False"
-                                       Text="Buscar" />
-                            <TextBox x:Name="SearchBox"
-                                     Style="{StaticResource SearchBox}"
-                                     TextChanged="SearchBox_TextChanged" />
-                        </Grid>
-                    </Grid>
-                </Border>
-
-                <StackPanel Grid.Column="3" VerticalAlignment="Center" Orientation="Horizontal">
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal">
                     <Button Margin="0"
                             Style="{StaticResource GlyphButton}"
                             Click="Sort_Click"
@@ -418,6 +421,10 @@
                             Content="&#xE72C;"
                             ToolTip="Recarregar (F5)" />
                     <Button Style="{StaticResource GlyphButton}"
+                            Click="Settings_Click"
+                            Content="&#xE713;"
+                            ToolTip="Configurações" />
+                    <Button Style="{StaticResource GlyphButton}"
                             Click="Close_Click"
                             Content="&#xE8BB;"
                             ToolTip="Fechar (Esc)" />
@@ -425,31 +432,106 @@
             </Grid>
 
             <!--
-                ============ ABAS ============
-                Fica escondida com uma pasta só, então o layout de sempre não muda.
+                ============ BUSCA ============
+                Saiu do cabeçalho e ganhou a largura toda. A tecla desenhada à
+                direita não é enfeite: "/" devolve o foco para cá.
             -->
-            <ListBox x:Name="TabStrip"
-                     Grid.Row="1"
-                     Margin="0,18,0,0"
-                     HorizontalAlignment="Left"
-                     Background="Transparent"
-                     BorderThickness="0"
-                     Focusable="False"
-                     ItemContainerStyle="{StaticResource TabItem}"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                     SelectionChanged="TabStrip_SelectionChanged"
-                     Visibility="Collapsed">
-                <ListBox.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel Orientation="Horizontal" />
-                    </ItemsPanelTemplate>
-                </ListBox.ItemsPanel>
-            </ListBox>
+            <Border x:Name="SearchRow"
+                    Grid.Row="1"
+                    Height="34"
+                    Margin="0,16,0,0"
+                    Background="{StaticResource ControlBg}"
+                    BorderBrush="{StaticResource ControlBorder}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusControl}">
+                <Grid Margin="12,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Margin="0,0,9,0"
+                               VerticalAlignment="Center"
+                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                               FontSize="{StaticResource SizeGlyph}"
+                               Foreground="{StaticResource TextMuted}"
+                               Text="&#xE721;" />
+
+                    <Grid Grid.Column="1">
+                        <TextBlock x:Name="SearchPlaceholder"
+                                   VerticalAlignment="Center"
+                                   FontSize="{StaticResource SizeBody}"
+                                   Foreground="{StaticResource TextFaint}"
+                                   IsHitTestVisible="False"
+                                   Text="Buscar" />
+                        <TextBox x:Name="SearchBox"
+                                 Style="{StaticResource SearchBox}"
+                                 TextChanged="SearchBox_TextChanged" />
+                    </Grid>
+
+                    <Border Grid.Column="2"
+                            Margin="8,0,0,0"
+                            Style="{StaticResource KeyCap}">
+                        <TextBlock Style="{StaticResource KeyCapText}" Text="/" />
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!--
+                ============ ABAS ============
+                Some com uma pasta só, então o layout de sempre não muda.
+            -->
+            <Border x:Name="TabRow"
+                    Grid.Row="2"
+                    Margin="0,16,0,0"
+                    Padding="0,0,0,12"
+                    BorderBrush="{StaticResource Divider}"
+                    BorderThickness="0,0,0,1"
+                    Visibility="Collapsed">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <ListBox x:Name="TabStrip"
+                             Grid.Column="0"
+                             HorizontalAlignment="Left"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Focusable="False"
+                             ItemContainerStyle="{StaticResource TabItem}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             SelectionChanged="TabStrip_SelectionChanged">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
+
+                    <StackPanel Grid.Column="1"
+                                Margin="12,0,0,0"
+                                VerticalAlignment="Center"
+                                Orientation="Horizontal">
+                        <Border Style="{StaticResource KeyCap}">
+                            <TextBlock Style="{StaticResource KeyCapText}" Text="Tab" />
+                        </Border>
+                        <TextBlock Margin="7,0,0,0"
+                                   VerticalAlignment="Center"
+                                   FontSize="{StaticResource SizeHint}"
+                                   Foreground="{StaticResource Hint}"
+                                   Text="troca de hub" />
+                    </StackPanel>
+                </Grid>
+            </Border>
 
             <!--  ============ GRID DE CARDS ============  -->
             <ListBox x:Name="Cards"
-                     Grid.Row="2"
-                     Margin="-5,21,-5,-5"
+                     Grid.Row="3"
+                     Margin="-5,11,-5,-5"
                      AllowDrop="True"
                      HorizontalAlignment="Center"
                      VerticalAlignment="Top"
@@ -476,7 +558,7 @@
 
             <!--  ============ ESTADO VAZIO ============  -->
             <StackPanel x:Name="EmptyState"
-                        Grid.Row="2"
+                        Grid.Row="3"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Visibility="Collapsed">
@@ -518,9 +600,9 @@
             </StackPanel>
 
             <!--  ============ RODAPÉ ============  -->
-            <Grid Grid.Row="3" Margin="0,22,0,0">
+            <Grid Grid.Row="4" Margin="0,18,0,0">
                 <Border Height="1" VerticalAlignment="Top" Background="{StaticResource Divider}" />
-                <Grid Margin="0,16,0,0">
+                <Grid Margin="0,14,0,0">
                     <TextBlock x:Name="CountText"
                                HorizontalAlignment="Left"
                                FontFamily="{StaticResource MonoFont}"
@@ -538,8 +620,8 @@
             <!--  arrastar e soltar  -->
             <Border x:Name="DropOverlay"
                     Grid.Row="0"
-                    Grid.RowSpan="4"
-                    Margin="-30,-30,-30,-24"
+                    Grid.RowSpan="5"
+                    Margin="-24,-22,-24,-18"
                     Background="{StaticResource Scrim}"
                     CornerRadius="{StaticResource RadiusWindow}"
                     IsHitTestVisible="False"

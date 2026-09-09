@@ -39,7 +39,7 @@ public partial class MainWindow
         }
 
         TabStrip.ItemsSource = _tabs;
-        TabStrip.Visibility = _tabs.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        TabRow.Visibility = _tabs.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     /// <summary>Maior aba, para a janela caber em todas sem redimensionar na troca.</summary>
@@ -125,7 +125,7 @@ public partial class MainWindow
         tab.Count = FolderScanner.CountSupported(path);
         _tabs.Add(tab);
 
-        TabStrip.Visibility = _tabs.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        TabRow.Visibility = _tabs.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
         PersistTabs();
 
         ActivateTab(tab, resize: true, animate: true);
@@ -138,7 +138,7 @@ public partial class MainWindow
 
         int index = _tabs.IndexOf(tab);
         _tabs.Remove(tab);
-        TabStrip.Visibility = _tabs.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        TabRow.Visibility = _tabs.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
         PersistTabs();
 
         if (ReferenceEquals(tab, _tab))

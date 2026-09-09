@@ -17,14 +17,15 @@ public partial class MainWindow : HubWindow
     // Card + 5px de margem de cada lado = 10px de gap, como no design. Vem do
     // tema para que um arquivo de tema possa mudar o tamanho dos cards.
     private double CardOuterWidth => ThemeSize("CardWidth", 160) + 10;
-    private double CardOuterHeight => ThemeSize("CardHeight", 132) + 10;
+    private double CardOuterHeight => ThemeSize("CardHeight", 118) + 10;
 
     private double ThemeSize(string key, double fallback)
         => TryFindResource(key) is double value && value > 0 ? value : fallback;
 
     // Só serve para limitar a altura da grade em telas baixas; a altura real da
     // janela vem de SizeToContent, então erro de alguns pixels aqui não importa.
-    private const double ApproxChromeHeight = 166;
+    // Medido na janela real com abas: 244px de tudo que não é grade.
+    private const double ApproxChromeHeight = 244;
 
     // 3 colunas na largura do design (560px).
     private const double MinShellWidth = 562;
@@ -189,9 +190,16 @@ public partial class MainWindow : HubWindow
                 : "Solte atalhos (.lnk, .url, .exe) dentro da pasta e eles aparecem aqui na hora.";
         }
 
-        CountText.Text = _visible.Count == _all.Count
+        string count = _visible.Count == _all.Count
             ? $"{_all.Count} {(_all.Count == 1 ? "atalho" : "atalhos")}"
             : $"{_visible.Count} de {_all.Count}";
+
+        // Com mais de um hub o rodapé também diz em qual deles você está — é a
+        // única pista de posição quando a aba ativa rolou para fora da faixa.
+        int hub = _tab is null ? 0 : _tabs.IndexOf(_tab) + 1;
+        CountText.Text = _tabs.Count > 1 && hub > 0
+            ? $"{count} · hub {hub} de {_tabs.Count}"
+            : count;
 
         if (_visible.Count > 0) Cards.SelectedIndex = 0;
     }
@@ -201,6 +209,12 @@ public partial class MainWindow : HubWindow
         TitleText.Text = PathDisplay.FolderName(_folder);
         SubtitleText.Text = PathDisplay.Shorten(_folder);
         Title = $"{TitleText.Text} — FolderHub";
+
+        // A busca varre só o hub aberto; dizer quantos existem evita prometer
+        // uma busca global que o app não faz.
+        SearchPlaceholder.Text = _tabs.Count > 1
+            ? $"Buscar em {_tabs.Count} hubs"
+            : "Buscar";
     }
 
     private void StartWatching()
@@ -270,8 +284,13 @@ public partial class MainWindow : HubWindow
 
         // Altura explícita da grade + SizeToContent: a janela fecha exatamente
         // em volta das linhas, sem depender de estimar cabeçalho e rodapé.
-        double roomForCards = Math.Max(CardOuterHeight, work.Height * 0.84 - ApproxChromeHeight);
-        Cards.Height = Math.Min(rows * CardOuterHeight, roomForCards);
+        //
+        // A altura sai sempre múltipla de uma linha. Cortar no meio de uma fazia
+        // aparecer barra de rolagem por causa de alguns pixels sobrando, com uma
+        // fileira pela metade encostada no rodapé.
+        double room = Math.Max(CardOuterHeight, work.Height * 0.84 - ApproxChromeHeight);
+        int fit = Math.Max(1, (int)(room / CardOuterHeight));
+        Cards.Height = Math.Min(rows, fit) * CardOuterHeight;
 
         // Com SizeToContent ligado, o WPF recalcula o tamanho no próximo layout e
         // descarta a largura pedida — só a primeira, aplicada antes de a janela
@@ -396,6 +415,14 @@ public partial class MainWindow : HubWindow
                 e.Handled = true;
                 return;
 
+            // A barra fica em teclas diferentes: Oem2 no teclado americano,
+            // AbntC1 (ao lado do Shift direito) no ABNT2 brasileiro.
+            case Key.Oem2 or Key.AbntC1 when !SearchBox.IsKeyboardFocused:
+                SearchBox.Focus();
+                SearchBox.SelectAll();
+                e.Handled = true;
+                return;
+
             case Key.F5:
                 _iconCache.Clear();
                 Reload(resize: true, animate: true);
@@ -407,7 +434,7 @@ public partial class MainWindow : HubWindow
                 e.Handled = true;
                 return;
 
-            case Key.Tab when ctrl:
+            case Key.Tab:
                 MoveTab(shift ? -1 : 1);
                 e.Handled = true;
                 return;

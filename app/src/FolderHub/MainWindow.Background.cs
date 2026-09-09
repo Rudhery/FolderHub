@@ -296,6 +296,12 @@ public partial class MainWindow
         if (enable && !App.Background) ToggleResident_Click(sender, e);
     }
 
+    /// <summary>
+    /// A engrenagem do cabeçalho. Ainda abre a pasta da configuração: a tela de
+    /// configuração é a próxima a nascer e assume este clique sem mais nada mudar.
+    /// </summary>
+    private void Settings_Click(object sender, RoutedEventArgs e) => OpenConfig_Click(sender, e);
+
     private void OpenConfig_Click(object sender, RoutedEventArgs e)
     {
         App.Config.Save();

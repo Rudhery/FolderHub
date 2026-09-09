@@ -34,16 +34,34 @@
     <SolidColorBrush x:Key="Scrim" Color="#E61A1C20" />
 
     <!-- card: rgba(255,255,255,0.028) / borda rgba(255,255,255,0.05) -->
-    <SolidColorBrush x:Key="CardBg" Color="#07FFFFFF" />
-    <SolidColorBrush x:Key="CardBorder" Color="#0DFFFFFF" />
+    <SolidColorBrush x:Key="CardBg" Color="#08FFFFFF" />
+    <SolidColorBrush x:Key="CardBorder" Color="#0EFFFFFF" />
     <!-- hover: rgba(255,255,255,0.065) / rgba(255,255,255,0.12) -->
     <SolidColorBrush x:Key="CardBgHover" Color="#11FFFFFF" />
     <SolidColorBrush x:Key="CardBorderHover" Color="#1FFFFFFF" />
     <!-- selecionado: rgba(255,255,255,0.075) / rgba(255,255,255,0.22) -->
     <SolidColorBrush x:Key="CardBgSelected" Color="#13FFFFFF" />
-    <SolidColorBrush x:Key="CardBorderSelected" Color="#38FFFFFF" />
+    <SolidColorBrush x:Key="CardBorderSelected" Color="#33FFFFFF" />
     <!-- anel externo do selecionado: rgba(255,255,255,0.05) -->
-    <SolidColorBrush x:Key="CardRing" Color="#0DFFFFFF" />
+    <!-- anel do card selecionado: 3px, rgba(255,255,255,0.035) -->
+    <SolidColorBrush x:Key="CardRing" Color="#09FFFFFF" />
+
+    <!-- aba: pílula transparente que só ganha fundo no hover -->
+    <SolidColorBrush x:Key="TabBg" Color="#00FFFFFF" />
+    <SolidColorBrush x:Key="TabBorder" Color="#12FFFFFF" />
+    <SolidColorBrush x:Key="TabBgHover" Color="#0DFFFFFF" />
+    <SolidColorBrush x:Key="TabBorderHover" Color="#24FFFFFF" />
+    <SolidColorBrush x:Key="TabBgSelected" Color="#17FFFFFF" />
+    <SolidColorBrush x:Key="TabBorderSelected" Color="#2EFFFFFF" />
+    <SolidColorBrush x:Key="TabLabel" Color="#BFEEF1F4" />
+    <SolidColorBrush x:Key="TabCount" Color="#8CEEF1F4" />
+    <SolidColorBrush x:Key="TabCountSelected" Color="#99EEF1F4" />
+
+    <!-- tecla desenhada (Tab, /) -->
+    <SolidColorBrush x:Key="KeyBg" Color="#0DFFFFFF" />
+    <SolidColorBrush x:Key="KeyBorder" Color="#17FFFFFF" />
+    <SolidColorBrush x:Key="KeyText" Color="#8CEEF1F4" />
+    <SolidColorBrush x:Key="Hint" Color="#94EEF1F4" />
 
     <!-- bloco do ícone dentro do card -->
     <SolidColorBrush x:Key="TileBg" Color="#22252A" />
@@ -54,8 +72,8 @@
     <SolidColorBrush x:Key="TileBorderSelected" Color="#1AFFFFFF" />
 
     <!-- controles sutis (busca, botões) -->
-    <SolidColorBrush x:Key="ControlBg" Color="#07FFFFFF" />
-    <SolidColorBrush x:Key="ControlBorder" Color="#0DFFFFFF" />
+    <SolidColorBrush x:Key="ControlBg" Color="#0BFFFFFF" />
+    <SolidColorBrush x:Key="ControlBorder" Color="#24FFFFFF" />
     <SolidColorBrush x:Key="ControlBgHover" Color="#12FFFFFF" />
     <SolidColorBrush x:Key="ControlBorderHover" Color="#1FFFFFFF" />
 
@@ -64,7 +82,8 @@
     <FontFamily x:Key="MonoFont">pack://application:,,,/Assets/Fonts/#JetBrains Mono</FontFamily>
 
     <sys:Double x:Key="CardWidth">160</sys:Double>
-    <sys:Double x:Key="CardHeight">132</sys:Double>
+    <sys:Double x:Key="CardHeight">118</sys:Double>
+    <sys:Double x:Key="TileSize">40</sys:Double>
 
     <Duration x:Key="StateDuration">0:0:0.15</Duration>
 
@@ -75,11 +94,14 @@
     -->
     <CornerRadius x:Key="RadiusWindow">8</CornerRadius>
     <CornerRadius x:Key="RadiusCard">14</CornerRadius>
-    <CornerRadius x:Key="RadiusCardRing">16</CornerRadius>
+    <CornerRadius x:Key="RadiusCardRing">17</CornerRadius>
     <CornerRadius x:Key="RadiusTile">12</CornerRadius>
-    <CornerRadius x:Key="RadiusTab">9</CornerRadius>
-    <CornerRadius x:Key="RadiusControl">8</CornerRadius>
-    <CornerRadius x:Key="RadiusButton">6</CornerRadius>
+    <!-- 999 = pílula: o raio maior que a metade da altura arredonda por inteiro -->
+    <CornerRadius x:Key="RadiusTab">999</CornerRadius>
+    <CornerRadius x:Key="RadiusTabTile">4</CornerRadius>
+    <CornerRadius x:Key="RadiusControl">11</CornerRadius>
+    <CornerRadius x:Key="RadiusButton">8</CornerRadius>
+    <CornerRadius x:Key="RadiusKey">6</CornerRadius>
     <CornerRadius x:Key="RadiusQuiet">10</CornerRadius>
     <CornerRadius x:Key="RadiusMenu">12</CornerRadius>
     <CornerRadius x:Key="RadiusMenuItem">7</CornerRadius>
@@ -89,7 +111,11 @@
     <sys:Double x:Key="SizeTitle">14</sys:Double>
     <sys:Double x:Key="SizeInitial">15</sys:Double>
     <sys:Double x:Key="SizeBody">12.5</sys:Double>
-    <sys:Double x:Key="SizeMeta">11</sys:Double>
+    <sys:Double x:Key="SizeCard">11.5</sys:Double>
+    <sys:Double x:Key="SizeTab">12</sys:Double>
+    <sys:Double x:Key="SizeHint">11</sys:Double>
+    <sys:Double x:Key="SizeMeta">10.5</sys:Double>
+    <sys:Double x:Key="SizeKey">10</sys:Double>
     <sys:Double x:Key="SizeGlyph">11</sys:Double>
     <sys:Double x:Key="SizeGlyphLarge">17</sys:Double>
     <sys:Double x:Key="SizeGlyphSmall">10</sys:Double>
@@ -142,9 +168,32 @@
         ============ BOTÃO DO CABEÇALHO ============
         24x24, raio 6, fundo transparente que vira rgba(255,255,255,0.07) no hover.
     -->
+    <!--
+        ============ TECLA DESENHADA ============
+        A moldurinha que representa uma tecla ("Tab", "/"). Style em vez de
+        UserControl porque o conteúdo muda mas a caixa nunca: assim cada uso
+        são duas linhas de XAML e nenhuma classe nova.
+    -->
+    <Style x:Key="KeyCap" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource KeyBg}" />
+        <Setter Property="BorderBrush" Value="{StaticResource KeyBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusKey}" />
+        <Setter Property="Padding" Value="6,2" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="KeyCapText" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+        <Setter Property="FontSize" Value="{StaticResource SizeKey}" />
+        <Setter Property="Foreground" Value="{StaticResource KeyText}" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
     <Style x:Key="GlyphButton" TargetType="Button">
-        <Setter Property="Width" Value="24" />
-        <Setter Property="Height" Value="24" />
+        <Setter Property="Width" Value="28" />
+        <Setter Property="Height" Value="28" />
         <Setter Property="Margin" Value="4,0,0,0" />
         <Setter Property="Foreground" Value="{StaticResource TextMuted}" />
         <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
@@ -272,7 +321,6 @@
         </Setter.Value>
         </Setter>
     </Style>
-
 
     <!-- ============ BUSCA ============ -->
     <Style x:Key="SearchBox" TargetType="TextBox">
