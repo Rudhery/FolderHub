@@ -11,3 +11,6 @@ dist/
 
 # runtime
 *.fhtmp
+
+# ferramentas
+.playwright-mcp/
