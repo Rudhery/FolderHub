@@ -84,7 +84,10 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; \
     Flags: uninsdeletevalue; Tasks: startup
 
 [Run]
-Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchApp}"; Flags: nowait postinstall skipifsilent
+; Com a tarefa de inicialização marcada, já sobe residente: o atalho global
+; passa a funcionar na hora, sem precisar encerrar a sessão antes.
+Filename: "{app}\{#AppExe}"; Parameters: "--resident"; Description: "{cm:LaunchApp}";     Flags: nowait postinstall skipifsilent; Tasks: startup
+Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchApp}";     Flags: nowait postinstall skipifsilent; Tasks: not startup
 
 [UninstallRun]
 ; Fecha a instância residente antes de remover o arquivo.

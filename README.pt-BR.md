@@ -88,9 +88,17 @@ O argumento nunca sobrescreve a pasta padrão salva na configuração.
 
 ### Modo residente
 
-`--background` mantém o FolderHub na bandeja ouvindo o atalho, em vez de encerrar depois
-de abrir um app. A opção *Iniciar com o Windows* do instalador já configura isso; dá para
-ligar e desligar também com o botão direito no cabeçalho do hub.
+O modo residente é o que faz o atalho global existir: ele mantém o FolderHub na bandeja
+escutando, em vez de encerrar depois de abrir um app.
+
+| Flag | Efeito |
+|---|---|
+| `--resident` | residente e visível - é o que o instalador executa no fim |
+| `--background` | residente e escondido - é o que a entrada de logon usa |
+
+Qualquer uma das duas fica gravada, então a partir daí abrir o FolderHub de qualquer
+jeito mantém o atalho vivo. Dá para ligar e desligar também com o botão direito no
+cabeçalho do hub.
 
 Residente existe um processo só — clicar num atalho fixado apenas pede para o que já está
 rodando aparecer, na pasta daquele atalho.

@@ -88,9 +88,16 @@ The argument never overwrites the default folder saved in the config.
 
 ### Resident mode
 
-`--background` keeps FolderHub in the tray listening for the hotkey instead of
-quitting after a launch. The installer's *Start with Windows* option sets this up;
-you can also toggle it by right-clicking the hub's header.
+Resident mode is what makes the hotkey exist at all: it keeps FolderHub in the tray
+listening, instead of quitting after a launch.
+
+| Flag | Effect |
+|---|---|
+| `--resident` | resident and visible - what the installer runs at the end |
+| `--background` | resident and hidden - what the logon entry uses |
+
+Either one is remembered, so from then on opening FolderHub any way you like keeps
+the hotkey alive. You can also toggle it by right-clicking the hub's header.
 
 While resident there is only ever one process — clicking a pinned shortcut just
 asks the running one to show itself, in the folder that shortcut points at.

@@ -28,10 +28,12 @@ public partial class App : Application
         Config = HubConfig.Load();
 
         // Argumento vence a config: permite vários hubs, um atalho por pasta.
-        //   FolderHub.exe "D:\Jogos"            abre aquele hub
-        //   FolderHub.exe --background          fica residente, escondido
+        //   FolderHub.exe "D:\Jogos"     abre aquele hub
+        //   FolderHub.exe --resident     fica residente e aparece
+        //   FolderHub.exe --background   fica residente sem aparecer (entrada de logon)
         string? folder = null;
         bool background = Config.Background;
+        bool askedForResident = false;
 
         foreach (string arg in e.Args)
         {
@@ -39,7 +41,13 @@ public partial class App : Application
             {
                 case "--background" or "-b":
                     background = true;
+                    askedForResident = true;
                     StartHidden = true;
+                    continue;
+
+                case "--resident":
+                    background = true;
+                    askedForResident = true;
                     continue;
 
                 case "--foreground":
@@ -61,6 +69,14 @@ public partial class App : Application
 
         Background = background;
         ShutdownMode = background ? ShutdownMode.OnExplicitShutdown : ShutdownMode.OnMainWindowClose;
+
+        // Quem pediu modo residente uma vez quer ele sempre: sem gravar isso, abrir
+        // pelo menu Iniciar voltava a ser não-residente e o atalho global sumia.
+        if (askedForResident && !Config.Background)
+        {
+            Config.Background = true;
+            Config.Save();
+        }
 
         folder ??= Config.FolderPath;
 
