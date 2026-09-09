@@ -4,7 +4,50 @@ Notable changes, newest first. Dates are the day the version was cut.
 
 ## [Unreleased]
 
-Nothing yet.
+### The main window, restyled
+
+- Search moved out of the header into a full-width row of its own, with a drawn
+  `/` key that actually focuses it (`Oem2` on US layouts, `AbntC1` on ABNT2).
+- Tabs became capsules carrying a small tile and the shortcut count, with a
+  `Tab` hint on the right. `Tab` on its own now switches hubs.
+- Shorter cards (118px) with a 40px tile; the selected ring went to 3px.
+- Header buttons at 28px, plus a settings button — it opens the config folder
+  until the settings screen exists.
+- The footer says which hub you are in.
+- The grid now ends on a whole row. Cutting mid-row raised a scrollbar over a
+  few leftover pixels and left half a row against the footer; the scrollbar also
+  floats in the window padding instead of touching the last column of cards.
+
+### A design layer over WPF
+
+New `Controls/` and a split theme, so a new screen writes what it wants rather
+than how it is drawn.
+
+- `HubTheme.xaml` holds every colour, radius, font and measurement; keys are the
+  contract an external theme overrides. `HubControls.xaml` holds the templates
+  and contains no literal values.
+- `HubCard`, `HubTabItem`, `HubIcon`, `HubKey`, `HubIconButton` — real controls
+  with a default style, so `<hub:HubCard Variant="Raised" Spacing="Medium" />`
+  is all a screen needs. The card carries both an icon-and-label layout and a
+  free-content one.
+- `HubSpacing.Gap` gives panels the CSS `gap` that WPF lacks, on a 4px scale.
+- `HubMotion` is the single source of timing, read from XAML by `x:Static`.
+- Card and tab states moved to `VisualStateManager`: 21 hand-written animations
+  became 9, and the third storyboard that only existed to animate back to normal
+  is gone.
+- `HubGlyph` names the icons, replacing raw codepoints and a font family
+  repeated at every use.
+
+### Fixed
+
+- Tab capsules rendered as stretched ovals. `border-radius: 999px` works in CSS
+  because the browser clamps the radius to half the side; WPF does not clamp, so
+  the radius is now half the capsule height.
+- The tab tile reused the card's opaque grey, which at 14px read as a flat light
+  chip beside the name. It is now a low translucent white that recedes, and the
+  5px mark inside carries the state.
+- `Themes/Dark.xaml` shipped a duplicated token block. WPF resolves the later
+  definition, so the stale values were the ones in effect.
 
 ## [1.0.0] — 2026-09-09
 

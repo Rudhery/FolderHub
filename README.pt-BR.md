@@ -254,7 +254,7 @@ dimensiona, sem recompilar:
 ```
 
 `app/themes/example.xaml` já vem pronto para copiar, e as chaves são as mesmas de
-`app/src/FolderHub/Themes/Dark.xaml`. Tema quebrado é registrado no log e
+`app/src/FolderHub/Themes/HubTheme.xaml`. Tema quebrado é registrado no log e
 ignorado, não derruba o app. O arquivo é carregado como XAML, então trate com a
 mesma confiança da config que aponta para ele.
 
@@ -297,7 +297,11 @@ app/src/FolderHub/
   MainWindow.Reorder.cs     menu de ordenação e arrastar para reordenar
   MainWindow.DragDrop.cs    soltar pastas e arquivos na janela
   MainWindow.Background.cs  bandeja, atalho global, mostrar/esconder
-  Themes/Dark.xaml          paleta e estilos
+  Themes/
+    HubTheme.xaml           cor, forma, tipografia e medida
+    HubControls.xaml        os modelos — sem literal, só tokens
+  Controls/                 os controles da casa: card, aba, ícone, tecla,
+                            espaçamento e movimento
   Services/
     FolderScanner.cs        lê a pasta e aplica o modo de ordenação
     GridLayout.cs           quantas colunas e linhas, como matemática pura

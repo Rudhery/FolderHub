@@ -185,7 +185,8 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Tema externo. Entra depois do Dark.xaml, então sobrescreve o que quiser.
+    /// Tema externo. Entra depois do tema embutido, então sobrescreve o que quiser
+    /// — o WPF procura os dicionários mesclados de trás para a frente.
     /// O arquivo é apontado pelo próprio usuário na config dele, então vale a
     /// mesma confiança da configuração — XAML pode instanciar tipos.
     /// </summary>

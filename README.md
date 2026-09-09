@@ -250,9 +250,14 @@ from, without recompiling:
 ```
 
 `app/themes/example.xaml` is a working starting point, and the keys are the ones in
-`app/src/FolderHub/Themes/Dark.xaml`. A broken theme is logged and ignored rather
+`app/src/FolderHub/Themes/HubTheme.xaml` — that file lists every one, with the
+`rgba()` value each colour came from. A broken theme is logged and ignored rather
 than fatal. Note the file is loaded as XAML, so treat it with the same trust as
 the config that points at it.
+
+Motion is deliberately not themeable: durations and easing live in
+`Controls/HubMotion.cs`, because a theme that slowed the hub down would work
+against the point of it.
 
 ## Design
 
@@ -292,7 +297,20 @@ app/src/FolderHub/
   MainWindow.Reorder.cs     sort menu and drag-to-reorder
   MainWindow.DragDrop.cs    dropping folders and files onto the window
   MainWindow.Background.cs  tray, global hotkey, show/hide
-  Themes/Dark.xaml          palette and styles
+  MainWindow.Config.cs      applying config changes without a restart
+  Themes/
+    HubTheme.xaml           every colour, radius, font and measurement
+    HubControls.xaml        the templates — no literal values, only tokens
+  Controls/
+    HubCard.cs              the card: variants, and either tile or free content
+    HubTabItem.cs           the tab capsule
+    HubIcon.cs              one icon, from an image, a named glyph or a letter
+    HubIconButton.cs        the square header button
+    HubKey.cs               a drawn key ("Tab", "/")
+    HubSelectable.cs        drives the visual states of card and tab
+    HubSpacing.cs           the `gap` WPF lacks, on a 4px scale
+    HubMotion.cs            every duration and curve, in one place
+    HubGlyph.cs             the icon set, by name instead of codepoint
   Services/
     FolderScanner.cs        reads the folder, applies the sort mode
     GridLayout.cs           how many columns and rows, as pure maths

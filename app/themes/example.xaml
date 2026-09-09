@@ -5,7 +5,12 @@
         "themeFile": "C:\caminho\para\este\arquivo.xaml"
 
     Só o que estiver aqui é sobrescrito; o resto continua vindo do tema embutido.
-    As chaves são as mesmas de src/FolderHub/Themes/Dark.xaml.
+    As chaves são as mesmas de src/FolderHub/Themes/HubTheme.xaml — abra aquele
+    arquivo para ver a lista inteira, com o valor rgba() de origem de cada cor.
+
+    O que NÃO dá para trocar aqui: o tempo e a curva das animações, que moram em
+    src/FolderHub/Controls/HubMotion.cs. Movimento é personalidade do app, e um
+    tema que atrasasse a abertura do hub trabalharia contra o propósito dele.
 -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -21,10 +26,15 @@
     <SolidColorBrush x:Key="CardBgHover" Color="#16FFFFFF" />
     <SolidColorBrush x:Key="CardBorderHover" Color="#26FFFFFF" />
 
-    <!-- bloco do ícone -->
+    <!-- bloco do ícone dentro do card -->
     <SolidColorBrush x:Key="TileBg" Color="#1E2126" />
     <SolidColorBrush x:Key="TileBgHover" Color="#252930" />
     <SolidColorBrush x:Key="TileBgSelected" Color="#2B3038" />
+
+    <!-- o bloquinho da aba é outro, e de propósito: ele é branco translúcido
+         para afundar no fundo em vez de virar um quadrado chapado -->
+    <SolidColorBrush x:Key="TabTileBg" Color="#12FFFFFF" />
+    <SolidColorBrush x:Key="TabDot" Color="#7FA8C9" />
 
     <!-- texto -->
     <SolidColorBrush x:Key="TextPrimary" Color="#F2F4F7" />
@@ -32,6 +42,11 @@
 
     <!-- tamanho do card: a janela se redimensiona junto -->
     <sys:Double x:Key="CardWidth">160</sys:Double>
-    <sys:Double x:Key="CardHeight">132</sys:Double>
+    <sys:Double x:Key="CardHeight">118</sys:Double>
+
+    <!-- forma. RadiusTab é a metade da altura da pílula: o WPF não limita o
+         raio como o CSS, então um número grande demais vira elipse -->
+    <CornerRadius x:Key="RadiusCard">14</CornerRadius>
+    <CornerRadius x:Key="RadiusTab">15</CornerRadius>
 
 </ResourceDictionary>

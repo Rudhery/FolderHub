@@ -1,0 +1,189 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <!--
+        ============================================================
+        HubTheme — o vocabulário visual do FolderHub
+        ============================================================
+
+        Só valores. Nenhum estilo, nenhum modelo de controle: quem desenha é o
+        HubControls.xaml, e ele não deve conhecer um único número literal.
+
+        Estas chaves são contrato: um arquivo de tema apontado por "themeFile"
+        na configuração sobrescreve por nome, então renomear uma quebra os temas
+        de quem já usa. Veja app/themes/example.xaml.
+
+        A paleta é monocromática fria e sem cor de destaque — a hierarquia
+        inteira vem de opacidade de branco sobre o acrílico do Windows. Os
+        comentários guardam o valor rgba() de origem, que é como o design foi
+        desenhado.
+
+        O tempo das animações NÃO está aqui: mora em Controls/HubMotion.cs. É
+        personalidade do app, não decoração trocável.
+    -->
+
+    <!--  ============ SUPERFÍCIE ============  -->
+
+    <!--  a janela por cima do acrílico: rgba(26,28,32,0.86)  -->
+    <SolidColorBrush x:Key="Surface" Color="#DB1A1C20" />
+    <!--  rgba(255,255,255,0.07)  -->
+    <SolidColorBrush x:Key="SurfaceBorder" Color="#12FFFFFF" />
+    <!--  rgba(255,255,255,0.055)  -->
+    <SolidColorBrush x:Key="Divider" Color="#0EFFFFFF" />
+    <!--  menu flutuante: quase opaco, porque ele sai da janela e não tem acrílico atrás  -->
+    <SolidColorBrush x:Key="MenuSurface" Color="#F51A1C20" />
+    <!--  véu do arrastar e soltar: a superfície, quase opaca  -->
+    <SolidColorBrush x:Key="Scrim" Color="#E61A1C20" />
+
+    <!--  ============ TEXTO ============  -->
+
+    <SolidColorBrush x:Key="TextPrimary" Color="#EEF1F4" />
+    <SolidColorBrush x:Key="TextStrong" Color="#FFFFFF" />
+    <!--  rgba(238,241,244,0.88)  -->
+    <SolidColorBrush x:Key="TextLabel" Color="#E0EEF1F4" />
+    <!--  rgba(238,241,244,0.58)  -->
+    <SolidColorBrush x:Key="TextMeta" Color="#94EEF1F4" />
+    <!--  rgba(238,241,244,0.45)  -->
+    <SolidColorBrush x:Key="TextMuted" Color="#73EEF1F4" />
+    <!--  rgba(238,241,244,0.42)  -->
+    <SolidColorBrush x:Key="TextFaint" Color="#6BEEF1F4" />
+    <!--  dica ao lado de uma tecla desenhada  -->
+    <SolidColorBrush x:Key="Hint" Color="#94EEF1F4" />
+    <!--  seleção dentro da busca  -->
+    <SolidColorBrush x:Key="SelectionFill" Color="#8FA6BD" />
+
+    <!--  ============ GLIFO ============  -->
+
+    <SolidColorBrush x:Key="Glyph" Color="#8FA6BD" />
+    <SolidColorBrush x:Key="GlyphHover" Color="#B3C5D6" />
+    <SolidColorBrush x:Key="GlyphSelected" Color="#DBE4EC" />
+
+    <!--  ============ CARD ============  -->
+
+    <!--  rgba(255,255,255,0.03) / borda rgba(255,255,255,0.055)  -->
+    <SolidColorBrush x:Key="CardBg" Color="#08FFFFFF" />
+    <SolidColorBrush x:Key="CardBorder" Color="#0EFFFFFF" />
+    <!--  rgba(255,255,255,0.065) / rgba(255,255,255,0.12)  -->
+    <SolidColorBrush x:Key="CardBgHover" Color="#11FFFFFF" />
+    <SolidColorBrush x:Key="CardBorderHover" Color="#1FFFFFFF" />
+    <!--  rgba(255,255,255,0.075) / rgba(255,255,255,0.2)  -->
+    <SolidColorBrush x:Key="CardBgSelected" Color="#13FFFFFF" />
+    <SolidColorBrush x:Key="CardBorderSelected" Color="#33FFFFFF" />
+    <!--  anel externo de 3px: rgba(255,255,255,0.035)  -->
+    <SolidColorBrush x:Key="CardRing" Color="#09FFFFFF" />
+
+    <!--  ============ BLOCO DO ÍCONE ============  -->
+
+    <SolidColorBrush x:Key="TileBg" Color="#22252A" />
+    <SolidColorBrush x:Key="TileBorder" Color="#0FFFFFFF" />
+    <SolidColorBrush x:Key="TileBgHover" Color="#282C32" />
+    <SolidColorBrush x:Key="TileBorderHover" Color="#14FFFFFF" />
+    <SolidColorBrush x:Key="TileBgSelected" Color="#2C3138" />
+    <SolidColorBrush x:Key="TileBorderSelected" Color="#1AFFFFFF" />
+
+    <!--  ============ ABA ============  -->
+
+    <!--  pílula transparente, que só ganha fundo quando o ponteiro chega  -->
+    <SolidColorBrush x:Key="TabBg" Color="#00FFFFFF" />
+    <SolidColorBrush x:Key="TabBorder" Color="#12FFFFFF" />
+    <SolidColorBrush x:Key="TabBgHover" Color="#0DFFFFFF" />
+    <SolidColorBrush x:Key="TabBorderHover" Color="#24FFFFFF" />
+    <SolidColorBrush x:Key="TabBgSelected" Color="#17FFFFFF" />
+    <SolidColorBrush x:Key="TabBorderSelected" Color="#2EFFFFFF" />
+    <!--
+        O bloquinho da aba tem tokens próprios, e não os do card: 14px de um
+        cinza opaco viravam um quadrado claro chapado ao lado do nome.
+
+        E ele é o mesmo nos três estados de propósito. Acender o bloco junto com
+        a pílula empilhava dois brancos translúcidos e devolvia o quadrado claro
+        que se queria evitar, agora só na aba aberta. Quem carrega o estado é a
+        marca de 5px dentro dele.
+    -->
+    <SolidColorBrush x:Key="TabTileBg" Color="#0FFFFFFF" />
+    <SolidColorBrush x:Key="TabDot" Color="#8FA6BD" />
+    <SolidColorBrush x:Key="TabDotHover" Color="#B3C5D6" />
+    <SolidColorBrush x:Key="TabDotSelected" Color="#EEF1F4" />
+
+    <SolidColorBrush x:Key="TabLabel" Color="#BFEEF1F4" />
+    <SolidColorBrush x:Key="TabCount" Color="#8CEEF1F4" />
+    <SolidColorBrush x:Key="TabCountSelected" Color="#99EEF1F4" />
+
+    <!--  ============ TECLA DESENHADA ============  -->
+
+    <SolidColorBrush x:Key="KeyBg" Color="#0DFFFFFF" />
+    <SolidColorBrush x:Key="KeyBorder" Color="#17FFFFFF" />
+    <SolidColorBrush x:Key="KeyText" Color="#8CEEF1F4" />
+
+    <!--  ============ CONTROLES ============  -->
+
+    <!--  busca e botões  -->
+    <SolidColorBrush x:Key="ControlBg" Color="#0BFFFFFF" />
+    <SolidColorBrush x:Key="ControlBorder" Color="#24FFFFFF" />
+    <SolidColorBrush x:Key="ControlBgHover" Color="#12FFFFFF" />
+    <SolidColorBrush x:Key="ControlBorderHover" Color="#1FFFFFFF" />
+
+    <!--  barra de rolagem  -->
+    <SolidColorBrush x:Key="ScrollThumb" Color="#1FFFFFFF" />
+    <SolidColorBrush x:Key="ScrollThumbHover" Color="#3DFFFFFF" />
+    <SolidColorBrush x:Key="ScrollThumbDragging" Color="#5CFFFFFF" />
+
+    <!--
+        ============ FORMA ============
+        Nomeados pelo papel, não pelo valor: dois elementos com o mesmo raio hoje
+        podem divergir amanhã sem virar caça ao número no XAML.
+    -->
+
+    <CornerRadius x:Key="RadiusWindow">8</CornerRadius>
+    <CornerRadius x:Key="RadiusCard">14</CornerRadius>
+    <!--  o anel fica 3px fora do card, então acompanha: 14 + 3  -->
+    <CornerRadius x:Key="RadiusCardRing">17</CornerRadius>
+    <CornerRadius x:Key="RadiusTile">12</CornerRadius>
+    <!--
+        Metade da altura da pílula (30 / 2), que é o que fecha as pontas em
+        semicírculo. No CSS dá para escrever 999px porque o navegador limita o
+        raio a metade do lado; o WPF não limita — 999 ali desenhava uma elipse
+        esticada em vez de uma cápsula. Mexeu na altura da aba, mexa aqui.
+    -->
+    <CornerRadius x:Key="RadiusTab">15</CornerRadius>
+    <CornerRadius x:Key="RadiusTabTile">4</CornerRadius>
+    <CornerRadius x:Key="RadiusControl">11</CornerRadius>
+    <CornerRadius x:Key="RadiusButton">8</CornerRadius>
+    <CornerRadius x:Key="RadiusKey">6</CornerRadius>
+    <CornerRadius x:Key="RadiusQuiet">10</CornerRadius>
+    <CornerRadius x:Key="RadiusMenu">12</CornerRadius>
+    <CornerRadius x:Key="RadiusMenuItem">7</CornerRadius>
+    <CornerRadius x:Key="RadiusThumb">3</CornerRadius>
+
+    <!--
+        ============ TIPOGRAFIA ============
+        Manrope e JetBrains Mono, embutidas em Assets/Fonts (SIL Open Font
+        License). Vão no exe para que a tela seja a mesma em qualquer máquina.
+    -->
+
+    <FontFamily x:Key="UiFont">pack://application:,,,/Assets/Fonts/#Manrope</FontFamily>
+    <FontFamily x:Key="MonoFont">pack://application:,,,/Assets/Fonts/#JetBrains Mono</FontFamily>
+
+    <sys:Double x:Key="SizeTitle">14</sys:Double>
+    <sys:Double x:Key="SizeInitial">15</sys:Double>
+    <sys:Double x:Key="SizeBody">12.5</sys:Double>
+    <sys:Double x:Key="SizeCard">11.5</sys:Double>
+    <sys:Double x:Key="SizeTab">12</sys:Double>
+    <sys:Double x:Key="SizeHint">11</sys:Double>
+    <sys:Double x:Key="SizeMeta">10.5</sys:Double>
+    <sys:Double x:Key="SizeKey">10</sys:Double>
+    <sys:Double x:Key="SizeGlyph">11</sys:Double>
+    <sys:Double x:Key="SizeGlyphLarge">17</sys:Double>
+    <sys:Double x:Key="SizeGlyphSmall">10</sys:Double>
+
+    <!--
+        ============ MEDIDA ============
+        O tamanho do card é lido pelo código que dimensiona a janela, então mudar
+        aqui redimensiona o hub junto.
+    -->
+
+    <sys:Double x:Key="CardWidth">160</sys:Double>
+    <sys:Double x:Key="CardHeight">118</sys:Double>
+    <sys:Double x:Key="TileSize">40</sys:Double>
+
+</ResourceDictionary>
