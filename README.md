@@ -174,13 +174,35 @@ so do `01 -`, `01.`, `01_` and `01)`.
   "closeAfterLaunch": true,    // dismiss after opening an app
   "closeOnBlur": false,        // dismiss when the window loses focus
   "sort": "Manual",            // Manual | NameAsc | NameDesc | Recent
-  "maxColumns": 7
+  "maxColumns": 7,
+  "themeFile": null            // path to a .xaml that overrides the theme
 }
 ```
 
 An older `"folderPath"` is migrated to a single tab on first run.
 Whatever the app swallows quietly is recorded in
 `%APPDATA%\FolderHub\folderhub.log`.
+
+## Theming
+
+`themeFile` points at a `ResourceDictionary` loaded after the built-in theme, so
+anything it defines wins. Colours, and the card size the window sizes itself
+from, without recompiling:
+
+```xml
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+  <SolidColorBrush x:Key="Surface" Color="#DB16181D" />
+  <SolidColorBrush x:Key="TileBg" Color="#1E2126" />
+  <sys:Double x:Key="CardWidth">180</sys:Double>
+</ResourceDictionary>
+```
+
+`themes/example.xaml` is a working starting point, and the keys are the ones in
+`app/src/FolderHub/Themes/Dark.xaml`. A broken theme is logged and ignored rather
+than fatal. Note the file is loaded as XAML, so treat it with the same trust as
+the config that points at it.
 
 ## Design
 
@@ -215,12 +237,18 @@ WPF on .NET 10, no external dependencies.
 ```
 src/FolderHub/
   App.xaml.cs               startup, arguments, single instance
-  MainWindow.xaml(.cs)      layout, cards, adaptive grid, search, drag & drop
+  MainWindow.xaml(.cs)      the window itself: loading, search, keyboard, sizing
   MainWindow.Tabs.cs        tabs and their lazy loading
+  MainWindow.Reorder.cs     sort menu and drag-to-reorder
+  MainWindow.DragDrop.cs    dropping folders and files onto the window
   MainWindow.Background.cs  tray, global hotkey, show/hide
   Themes/Dark.xaml          palette and styles
   Services/
     FolderScanner.cs        reads the folder, applies the sort mode
+    GridLayout.cs           how many columns and rows, as pure maths
+    ItemFilter.cs           the search, ignoring accents
+    PathDisplay.cs          shortening paths for the header
+    IconLoadQueue.cs        the dedicated STA thread that extracts icons
     IconLoader.cs           high-resolution icon extraction
     ManualOrder.cs          persists the order by renaming files
     Launcher.cs             runs the shortcut
@@ -255,6 +283,9 @@ A few decisions worth calling out:
   current name. It rolls back if anything fails midway.
 - **`ShowInTaskbar` is decided before the handle exists** — changing it later makes WPF
   recreate the HWND, which would silently orphan the global hotkey and the message hook.
+- **Hiding gives the memory back.** Resident and idle, the hub does not need its pages
+  resident: hiding collects and trims the working set, taking it from ~160 MB to ~25 MB.
+  The window and its icons stay built, so the next open is still instant.
 
 ## Tests
 
@@ -262,9 +293,10 @@ A few decisions worth calling out:
 dotnet test
 ```
 
-40 tests over the pure logic: what the scanner picks up, the four sort modes (including
+66 tests over the pure logic: what the scanner picks up, the four sort modes (including
 natural ordering, so `Item2` comes before `Item10`), the manual-order renaming with its
-collision case, the hotkey parser, and the config migration from single folder to tabs.
+collision case, the hotkey parser, the config migration from single folder to tabs, the
+grid column maths, the accent-insensitive search, and path shortening.
 
 ## Why not a Windows service?
 

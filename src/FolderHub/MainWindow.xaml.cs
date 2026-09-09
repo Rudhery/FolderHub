@@ -13,9 +13,13 @@ namespace FolderHub;
 
 public partial class MainWindow : Window
 {
-    // Card de 160x132 com 5px de margem de cada lado = 10px de gap, como no design.
-    private const double CardOuterWidth = 170;
-    private const double CardOuterHeight = 142;
+    // Card + 5px de margem de cada lado = 10px de gap, como no design. Vem do
+    // tema para que um arquivo de tema possa mudar o tamanho dos cards.
+    private double CardOuterWidth => ThemeSize("CardWidth", 160) + 10;
+    private double CardOuterHeight => ThemeSize("CardHeight", 132) + 10;
+
+    private double ThemeSize(string key, double fallback)
+        => TryFindResource(key) is double value && value > 0 ? value : fallback;
 
     // Só serve para limitar a altura da grade em telas baixas; a altura real da
     // janela vem de SizeToContent, então erro de alguns pixels aqui não importa.
@@ -40,13 +44,6 @@ public partial class MainWindow : Window
     private bool _suppressBlurClose;
     private bool _closing;
 
-    // Reordenar arrastando. O formato próprio separa o arraste interno do
-    // arraste externo (pasta ou atalhos vindos do Explorer).
-    private const string DragFormat = "FolderHub.Reorder";
-    private Point _dragOrigin;
-    private AppItem? _dragCandidate;
-    private AppItem? _dragging;
-    private bool _dragCompleted;
     private bool _animateIntro;
 
     public MainWindow(IReadOnlyList<HubTab> tabs)
@@ -159,36 +156,14 @@ public partial class MainWindow : Window
 
     private void StartIconLoad(List<AppItem> pending, CancellationToken token)
     {
-        if (pending.Count == 0) return;
-
-        Log.Info($"extraindo {pending.Count} ícone(s) de {_folder}");
-
-        // Shell COM é apartment-threaded: uma STA dedicada é o caminho mais previsível.
-        var thread = new Thread(() =>
-        {
-            foreach (var item in pending)
+        IconLoadQueue.Start(pending, _folder, (item, icon) =>
+            Dispatcher.BeginInvoke(DispatcherPriority.Background, () =>
             {
                 if (token.IsCancellationRequested) return;
-
-                var icon = IconLoader.Load(item.Path);
-                if (icon is null) continue;
-
-                Dispatcher.BeginInvoke(DispatcherPriority.Background, () =>
-                {
-                    if (token.IsCancellationRequested) return;
-                    _iconCache[item.Path] = icon;
-                    item.Icon = icon;
-                });
-            }
-        })
-        {
-            IsBackground = true,
-            Priority = ThreadPriority.BelowNormal,
-            Name = "FolderHub.Icons"
-        };
-
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.Start();
+                _iconCache[item.Path] = icon;
+                item.Icon = icon;
+            }),
+            token);
     }
 
     private void ApplyFilter()
@@ -196,13 +171,7 @@ public partial class MainWindow : Window
         string query = SearchBox.Text.Trim();
 
         _visible.Clear();
-        foreach (var item in _all)
-        {
-            if (query.Length == 0 || item.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase))
-            {
-                _visible.Add(item);
-            }
-        }
+        foreach (var item in ItemFilter.Apply(_all, query)) _visible.Add(item);
 
         SearchPlaceholder.Visibility = query.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
 
@@ -228,28 +197,9 @@ public partial class MainWindow : Window
 
     private void UpdateHeader()
     {
-        string name = new DirectoryInfo(_folder).Name;
-        TitleText.Text = string.IsNullOrWhiteSpace(name) ? "Hub" : name;
-        SubtitleText.Text = PrettyPath(_folder);
+        TitleText.Text = PathDisplay.FolderName(_folder);
+        SubtitleText.Text = PathDisplay.Shorten(_folder);
         Title = $"{TitleText.Text} — FolderHub";
-    }
-
-    /// <summary>Caminho curto o bastante para caber no cabeçalho sem virar sopa de letras.</summary>
-    private static string PrettyPath(string path)
-    {
-        string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        if (home.Length > 0 && path.StartsWith(home, StringComparison.OrdinalIgnoreCase))
-        {
-            path = "~" + path[home.Length..];
-        }
-
-        if (path.Length <= 46) return path;
-
-        var parts = path.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length <= 3) return path;
-
-        return $"{parts[0]}{Path.DirectorySeparatorChar}…{Path.DirectorySeparatorChar}" +
-               string.Join(Path.DirectorySeparatorChar, parts[^2..]);
     }
 
     private void StartWatching()
@@ -306,11 +256,10 @@ public partial class MainWindow : Window
         // A janela cabe na maior aba, senão ela pularia de tamanho a cada troca.
         count = Math.Max(count, LargestTabCount());
 
-        int max = Math.Clamp(App.Config.MaxColumns, 3, 10);
-        int cols = count <= 0 ? 3 : BalancedColumns(count, max);
+        int cols = GridLayout.Columns(count, Math.Clamp(App.Config.MaxColumns, 3, 10));
         _columns = cols;
 
-        int rows = count <= 0 ? 1 : (int)Math.Ceiling(count / (double)cols);
+        int rows = GridLayout.Rows(count, cols);
 
         var work = SystemParameters.WorkArea;
 
@@ -326,33 +275,6 @@ public partial class MainWindow : Window
         Width = Math.Min(Math.Max(MinShellWidth, cols * CardOuterWidth + 52), work.Width - 40);
 
         if (IsLoaded) ClampIntoWorkArea(work);
-    }
-
-    /// <summary>
-    /// Escolhe o nº de colunas perto do formato quadrado, mas preferindo
-    /// grades em que a última linha fica cheia (sem buracos feios).
-    /// </summary>
-    private static int BalancedColumns(int count, int max)
-    {
-        int ideal = Math.Clamp((int)Math.Ceiling(Math.Sqrt(count * 1.6)), 3, max);
-
-        int best = ideal;
-        int bestScore = int.MaxValue;
-
-        for (int cols = Math.Max(3, ideal - 1); cols <= Math.Min(max, ideal + 1); cols++)
-        {
-            int remainder = count % cols;
-            int holes = remainder == 0 ? 0 : cols - remainder;
-            int score = holes * 2 + Math.Abs(cols - ideal);
-
-            if (score < bestScore)
-            {
-                bestScore = score;
-                best = cols;
-            }
-        }
-
-        return best;
     }
 
     private void ClampIntoWorkArea(Rect work)
@@ -445,132 +367,6 @@ public partial class MainWindow : Window
             e.Handled = true;
             Launch(item);
         }
-    }
-
-    // ----------------------------------------------------------- reordenar
-
-    /// <summary>Só faz sentido arrastar com a ordem manual e a lista inteira à vista.</summary>
-    private bool CanReorder => App.Config.Sort == SortMode.Manual && SearchBox.Text.Length == 0;
-
-    private void Cards_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        _dragCompleted = false;
-        _dragOrigin = e.GetPosition(this);
-        _dragCandidate = CanReorder ? ItemFrom(e.OriginalSource) : null;
-    }
-
-    private void Cards_PreviewMouseMove(object sender, MouseEventArgs e)
-    {
-        if (_dragCandidate is null || e.LeftButton != MouseButtonState.Pressed) return;
-
-        var delta = e.GetPosition(this) - _dragOrigin;
-        if (Math.Abs(delta.X) < SystemParameters.MinimumHorizontalDragDistance &&
-            Math.Abs(delta.Y) < SystemParameters.MinimumVerticalDragDistance) return;
-
-        _dragging = _dragCandidate;
-        _dragCandidate = null;
-        _animateIntro = false;
-        Cards.SelectedItem = _dragging;
-
-        try
-        {
-            DragDrop.DoDragDrop(Cards, new DataObject(DragFormat, _dragging.Path), DragDropEffects.Move);
-        }
-        finally
-        {
-            _dragging = null;
-            _dragCompleted = true;
-        }
-    }
-
-    private void Cards_DragOver(object sender, DragEventArgs e)
-    {
-        if (_dragging is null || !e.Data.GetDataPresent(DragFormat)) return;
-
-        e.Effects = DragDropEffects.Move;
-        e.Handled = true;
-
-        // Reordena ao vivo: os cards se acomodam sob o cursor, sem adorner.
-        if (ItemFrom(e.OriginalSource) is not { } target || ReferenceEquals(target, _dragging)) return;
-
-        int from = _visible.IndexOf(_dragging);
-        int to = _visible.IndexOf(target);
-        if (from >= 0 && to >= 0 && from != to) _visible.Move(from, to);
-    }
-
-    private void Cards_Drop(object sender, DragEventArgs e)
-    {
-        if (_dragging is null || !e.Data.GetDataPresent(DragFormat)) return;
-        e.Handled = true;
-
-        // O caminho muda no disco, o nome não: é por ele que reencontramos o card.
-        string moved = _dragging.Name;
-
-        PersistOrder([.. _visible]);
-        _dragging = null;
-
-        // Reler é o que mantém caminhos, ordem e ícones coerentes.
-        Reload(resize: false);
-
-        int index = _visible.ToList().FindIndex(i => i.Name == moved);
-        if (index >= 0) MoveTo(index);
-    }
-
-    /// <summary>Grava a ordem renomeando os arquivos com prefixo numérico.</summary>
-    private void PersistOrder(IReadOnlyList<AppItem> ordered)
-    {
-        bool watching = _watcher?.EnableRaisingEvents ?? false;
-        if (_watcher != null) _watcher.EnableRaisingEvents = false;
-
-        try
-        {
-            foreach (var (from, to) in ManualOrder.Apply(ordered))
-            {
-                if (_iconCache.Remove(from, out var icon)) _iconCache[to] = icon;
-            }
-        }
-        finally
-        {
-            _reloadDebounce.Stop();
-            if (_watcher != null) _watcher.EnableRaisingEvents = watching;
-        }
-    }
-
-    // ----------------------------------------------------------- menu de ordem
-
-    private void Sort_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button button || button.ContextMenu is not { } menu) return;
-
-        string current = App.Config.Sort.ToString();
-        foreach (var entry in menu.Items.OfType<MenuItem>())
-        {
-            entry.IsChecked = entry.Tag as string == current;
-        }
-
-        menu.PlacementTarget = button;
-        menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
-        menu.IsOpen = true;
-    }
-
-    private void SortMode_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not MenuItem entry || entry.Tag is not string tag) return;
-        if (!Enum.TryParse(tag, out SortMode mode) || mode == App.Config.Sort) return;
-
-        App.Config.Sort = mode;
-        App.Config.Save();
-        Reload(resize: false, animate: true);
-    }
-
-    private void FreezeOrder_Click(object sender, RoutedEventArgs e)
-    {
-        if (_all.Count == 0) return;
-
-        PersistOrder(_all);
-        App.Config.Sort = SortMode.Manual;
-        App.Config.Save();
-        Reload(resize: false);
     }
 
     private void Cards_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
@@ -722,81 +518,5 @@ public partial class MainWindow : Window
     private void Reveal_Click(object sender, RoutedEventArgs e)
     {
         if (Cards.SelectedItem is AppItem item) Launcher.RevealInExplorer(item);
-    }
-
-    // ----------------------------------------------------------- drag & drop
-
-    protected override void OnDragEnter(DragEventArgs e)
-    {
-        base.OnDragEnter(e);
-        ShowDropOverlay(e);
-    }
-
-    protected override void OnDragOver(DragEventArgs e)
-    {
-        base.OnDragOver(e);
-        ShowDropOverlay(e);
-    }
-
-    protected override void OnDragLeave(DragEventArgs e)
-    {
-        base.OnDragLeave(e);
-        HideDropOverlay();
-    }
-
-    protected override void OnDrop(DragEventArgs e)
-    {
-        base.OnDrop(e);
-        if (e.Data.GetDataPresent(DragFormat)) return;
-
-        HideDropOverlay();
-
-        if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths || paths.Length == 0) return;
-
-        // Pasta solta na janela vira aba nova (ou vai para a que já existe).
-        if (paths.Length == 1 && Directory.Exists(paths[0]))
-        {
-            AddTab(paths[0]);
-            return;
-        }
-
-        int added = ShortcutWriter.AddToFolder(paths, _folder);
-        if (added > 0) Reload(resize: true);
-    }
-
-    private void ShowDropOverlay(DragEventArgs e)
-    {
-        if (e.Data.GetDataPresent(DragFormat))
-        {
-            e.Effects = DragDropEffects.Move;
-            e.Handled = true;
-            return;
-        }
-
-        if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths || paths.Length == 0)
-        {
-            e.Effects = DragDropEffects.None;
-            e.Handled = true;
-            return;
-        }
-
-        bool isFolder = paths.Length == 1 && Directory.Exists(paths[0]);
-        DropText.Text = isFolder ? "Solte para abrir esta pasta em uma aba" : "Solte para adicionar ao hub";
-        e.Effects = isFolder ? DragDropEffects.Link : DragDropEffects.Copy;
-        e.Handled = true;
-
-        if (DropOverlay.Visibility == Visibility.Visible) return;
-
-        DropOverlay.Visibility = Visibility.Visible;
-        DropOverlay.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(140)));
-    }
-
-    private void HideDropOverlay()
-    {
-        if (DropOverlay.Visibility != Visibility.Visible) return;
-
-        var fade = new DoubleAnimation(DropOverlay.Opacity, 0, TimeSpan.FromMilliseconds(140));
-        fade.Completed += (_, _) => DropOverlay.Visibility = Visibility.Collapsed;
-        DropOverlay.BeginAnimation(OpacityProperty, fade);
     }
 }

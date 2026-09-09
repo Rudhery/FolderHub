@@ -27,6 +27,7 @@ public partial class App : Application
         };
 
         Config = HubConfig.Load();
+        ApplyTheme(Config.ThemeFile);
 
         // Argumento vence a config: permite vários hubs, um atalho por pasta.
         //   FolderHub.exe "D:\Jogos"     abre aquele hub
@@ -111,6 +112,36 @@ public partial class App : Application
         if (Background) SingleInstance.ForgetWindow();
         SingleInstance.Release();
         base.OnExit(e);
+    }
+
+    /// <summary>
+    /// Tema externo. Entra depois do Dark.xaml, então sobrescreve o que quiser.
+    /// O arquivo é apontado pelo próprio usuário na config dele, então vale a
+    /// mesma confiança da configuração — XAML pode instanciar tipos.
+    /// </summary>
+    private static void ApplyTheme(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return;
+
+        try
+        {
+            if (!File.Exists(path))
+            {
+                Log.Warn($"tema não encontrado: {path}");
+                return;
+            }
+
+            using var stream = File.OpenRead(path);
+            if (System.Windows.Markup.XamlReader.Load(stream) is ResourceDictionary theme)
+            {
+                Current.Resources.MergedDictionaries.Add(theme);
+                Log.Info($"tema aplicado: {path}");
+            }
+        }
+        catch (Exception error)
+        {
+            Log.Warn($"tema inválido, seguindo com o padrão: {path}", error);
+        }
     }
 
     public static string? AskForFolder(string? initial = null)

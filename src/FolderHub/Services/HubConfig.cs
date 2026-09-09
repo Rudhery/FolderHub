@@ -42,6 +42,13 @@ public sealed class HubConfig
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public SortMode Sort { get; set; } = SortMode.Manual;
 
+    /// <summary>
+    /// Caminho de um .xaml com um ResourceDictionary. Ele é carregado depois do
+    /// tema embutido, então qualquer chave que definir vence — é assim que dá
+    /// para trocar cor e tamanho sem recompilar.
+    /// </summary>
+    public string? ThemeFile { get; set; }
+
     /// <summary>Máximo de colunas do grid.</summary>
     public int MaxColumns { get; set; } = 7;
 

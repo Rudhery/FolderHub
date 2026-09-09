@@ -282,4 +282,12 @@ internal static class Native
 
     [DllImport("user32.dll")]
     public static extern uint GetDpiForWindow(nint hwnd);
+
+    // ---------- Devolver memória quando o hub some da tela ----------
+    [DllImport("kernel32.dll")]
+    public static extern nint GetCurrentProcess();
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool SetProcessWorkingSetSizeEx(nint process, nint min, nint max, uint flags);
 }

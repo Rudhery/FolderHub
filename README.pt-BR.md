@@ -177,13 +177,35 @@ funcionando, e ele aceita `01 -`, `01.`, `01_` e `01)`.
   "closeAfterLaunch": true,    // some depois de abrir um app
   "closeOnBlur": false,        // some quando perde o foco
   "sort": "Manual",            // Manual | NameAsc | NameDesc | Recent
-  "maxColumns": 7
+  "maxColumns": 7,
+  "themeFile": null            // caminho de um .xaml que sobrescreve o tema
 }
 ```
 
 Um `"folderPath"` antigo é migrado para uma aba única na primeira abertura.
 O que o app engole em silêncio fica registrado em
 `%APPDATA%\FolderHub\folderhub.log`.
+
+## Temas
+
+`themeFile` aponta para um `ResourceDictionary` carregado depois do tema embutido,
+então tudo que ele definir vence. Cores, e o tamanho do card do qual a janela se
+dimensiona, sem recompilar:
+
+```xml
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+  <SolidColorBrush x:Key="Surface" Color="#DB16181D" />
+  <SolidColorBrush x:Key="TileBg" Color="#1E2126" />
+  <sys:Double x:Key="CardWidth">180</sys:Double>
+</ResourceDictionary>
+```
+
+`themes/example.xaml` já vem pronto para copiar, e as chaves são as mesmas de
+`app/src/FolderHub/Themes/Dark.xaml`. Tema quebrado é registrado no log e
+ignorado, não derruba o app. O arquivo é carregado como XAML, então trate com a
+mesma confiança da config que aponta para ele.
 
 ## Design
 
@@ -219,12 +241,18 @@ WPF em .NET 10, sem dependências externas.
 ```
 src/FolderHub/
   App.xaml.cs               inicialização, argumentos, instância única
-  MainWindow.xaml(.cs)      layout, cards, grade adaptativa, busca, drag & drop
+  MainWindow.xaml(.cs)      a janela em si: carga, busca, teclado, dimensionamento
   MainWindow.Tabs.cs        as abas e o carregamento preguiçoso
+  MainWindow.Reorder.cs     menu de ordenação e arrastar para reordenar
+  MainWindow.DragDrop.cs    soltar pastas e arquivos na janela
   MainWindow.Background.cs  bandeja, atalho global, mostrar/esconder
   Themes/Dark.xaml          paleta e estilos
   Services/
     FolderScanner.cs        lê a pasta e aplica o modo de ordenação
+    GridLayout.cs           quantas colunas e linhas, como matemática pura
+    ItemFilter.cs           a busca, ignorando acento
+    PathDisplay.cs          encurta o caminho para o cabeçalho
+    IconLoadQueue.cs        a thread STA dedicada que extrai os ícones
     IconLoader.cs           extração de ícone em alta resolução
     ManualOrder.cs          grava a ordem renomeando os arquivos
     Launcher.cs             executa o atalho
@@ -259,6 +287,9 @@ Decisões que valem citar:
   nome atual de outro. Se algo falhar no meio, ela desfaz.
 - **`ShowInTaskbar` é decidido antes do handle existir** — mudar depois faz o WPF recriar o
   HWND, e o atalho global e o hook de mensagens ficariam órfãos sem avisar.
+- **Esconder devolve a memória.** Residente e parado, o hub não precisa das páginas na
+  RAM: ao esconder ele coleta e devolve o working set, saindo de ~160 MB para ~25 MB. A
+  janela e os ícones continuam montados, então a próxima abertura segue instantânea.
 
 ## Testes
 
@@ -266,10 +297,10 @@ Decisões que valem citar:
 dotnet test
 ```
 
-40 testes sobre a lógica pura: o que o scanner recolhe, os quatro modos de ordenação
+66 testes sobre a lógica pura: o que o scanner recolhe, os quatro modos de ordenação
 (incluindo ordenação natural, para `Item2` vir antes de `Item10`), o renomeio da ordem
-manual com o caso de colisão, o parser do atalho, e a migração da config de pasta única
-para abas.
+manual com o caso de colisão, o parser do atalho, a migração da config de pasta única
+para abas, a matemática das colunas, a busca sem acento e o encurtamento de caminho.
 
 ## Por que não um serviço do Windows?
 

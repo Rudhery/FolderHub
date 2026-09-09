@@ -143,6 +143,28 @@ public partial class MainWindow
         Shell.Opacity = 0;
         Hide();
         _closing = false;
+
+        TrimWorkingSet();
+    }
+
+    /// <summary>
+    /// Escondido, o hub fica parado esperando o atalho e não precisa das páginas
+    /// residentes. Isso devolve o working set ao sistema; o Windows pagina de
+    /// volta o necessário na próxima abertura, que continua instantânea porque a
+    /// janela e os ícones seguem montados.
+    /// </summary>
+    private static void TrimWorkingSet()
+    {
+        try
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            Native.SetProcessWorkingSetSizeEx(Native.GetCurrentProcess(), -1, -1, 0);
+        }
+        catch (Exception error)
+        {
+            Log.Warn("não consegui devolver memória ao esconder", error);
+        }
     }
 
     /// <summary>Abre no monitor onde o mouse está, não sempre no primário.</summary>
