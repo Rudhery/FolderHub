@@ -7,6 +7,9 @@
 **A folder is the configuration.**
 A small Windows 11 launcher that turns any folder of shortcuts into a visual hub.
 
+No app registry, no database, no list of programs in the source.
+Drop a shortcut in the folder and it shows up. Press `Ctrl+Alt+Space` and it is there in 60 ms.
+
 [![build](https://github.com/Rudhery/FolderHub/actions/workflows/build.yml/badge.svg)](https://github.com/Rudhery/FolderHub/actions/workflows/build.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-10-512BD4.svg)](https://dotnet.microsoft.com/)
@@ -18,6 +21,11 @@ A small Windows 11 launcher that turns any folder of shortcuts into a visual hub
 </div>
 
 ---
+
+**[Install](#install)** · **[Tabs](#tabs)** · **[Ordering](#ordering)** ·
+**[Keyboard](#keyboard)** · **[Configuration](#configuration)** ·
+**[Performance](#performance)** · **[Theming](#theming)** ·
+**[How it works](#how-it-works)** · **[Contributing](CONTRIBUTING.md)**
 
 ## Repository
 
@@ -351,3 +359,14 @@ key is a normal user-session process started at logon, which is what resident mo
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+---
+
+<div align="center">
+
+[Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) ·
+[Security](SECURITY.md) · [Português](README.pt-BR.md)
+
+Built by [Rudhery Hotz](https://github.com/Rudhery)
+
+</div>

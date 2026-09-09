@@ -1,0 +1,32 @@
+name: Feature request
+description: Suggest something FolderHub should be able to do
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        One thing worth knowing before you write: FolderHub has a rule it tries hard
+        to keep — **the folder is the configuration**. Features that add a registry,
+        a database or a list of apps outside the folder tend to be turned down, and
+        features that make the folder itself do more tend to get in.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do
+      description: The situation, not the solution. What gets in your way today?
+      placeholder: I keep separate folders per client and want them all a keystroke away.
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What you have in mind
+      placeholder: A dropdown to pick the folder without leaving the window.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you have tried instead
+      description: Including anything FolderHub already does that almost works.

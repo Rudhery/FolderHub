@@ -1,0 +1,67 @@
+name: Bug report
+description: Something in FolderHub does not behave the way it should
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. The log at `%APPDATA%\FolderHub\folderhub.log`
+        usually holds the answer — FolderHub deliberately swallows failures so a
+        broken shortcut cannot take the window down, and that file is where they go.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+      placeholder: |
+        Pressing Ctrl+Alt+Space does nothing.
+        I expected the hub to appear.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to reproduce it
+      placeholder: |
+        1. Install with "Start with Windows" ticked
+        2. Sign out and back in
+        3. Press Ctrl+Alt+Space
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: FolderHub version
+      description: Right-click the header → Open the config, or check Apps & features.
+      placeholder: "1.2.0"
+    validations:
+      required: true
+
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      description: Run `winver`.
+      placeholder: "Windows 11 24H2 (build 26100)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: >
+        The tail of `%APPDATA%\FolderHub\folderhub.log`, if there is anything in it.
+        Paths in it may identify you — trim what you would rather not share.
+      render: text
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Config
+      description: >
+        `%APPDATA%\FolderHub\config.json`, with folder paths trimmed if you prefer.
+      render: json

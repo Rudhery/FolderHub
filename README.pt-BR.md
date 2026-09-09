@@ -7,6 +7,9 @@
 **A pasta é a configuração.**
 Um mini launcher para Windows 11 que transforma qualquer pasta de atalhos num hub visual.
 
+Sem cadastro de app, sem banco de dados, sem lista de programas no código.
+Colocou um atalho na pasta, aparece. Apertou `Ctrl+Alt+Space`, ele está lá em 60 ms.
+
 [![build](https://github.com/Rudhery/FolderHub/actions/workflows/build.yml/badge.svg)](https://github.com/Rudhery/FolderHub/actions/workflows/build.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-10-512BD4.svg)](https://dotnet.microsoft.com/)
@@ -18,6 +21,11 @@ Um mini launcher para Windows 11 que transforma qualquer pasta de atalhos num hu
 </div>
 
 ---
+
+**[Instalando](#instalando)** · **[Abas](#abas)** · **[Ordenando](#ordenando)** ·
+**[Teclado](#teclado)** · **[Configuração](#configuração)** ·
+**[Desempenho](#desempenho)** · **[Temas](#temas)** ·
+**[Como foi feito](#como-foi-feito)** · **[Contribuindo](CONTRIBUTING.md)**
 
 ## Repositório
 
@@ -357,3 +365,14 @@ bandeja e tecla de atalho é um processo normal da sessão do usuário iniciado 
 ## Licença
 
 MIT — veja [LICENSE](LICENSE).
+
+---
+
+<div align="center">
+
+[Contribuindo](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) ·
+[Segurança](SECURITY.md) · [English](README.md)
+
+Feito por [Rudhery Hotz](https://github.com/Rudhery)
+
+</div>
