@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Folder Hub — seus aplicativos organizados e sempre à mão</title>
+<meta name="description" content="O FolderHub transforma suas pastas em hubs personalizados para você encontrar e abrir tudo com muito mais rapidez. Aplicativo local para Windows 11.">
+<meta name="theme-color" content="#08090b">
+<link rel="canonical" href="https://rudhery.github.io/FolderHub/">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Folder Hub — seus aplicativos organizados e sempre à mão">
+<meta property="og:description" content="Uma pasta vira um hub visual. Aplicativo local para Windows 11, sem conta e sem telemetria.">
+<meta property="og:image" content="assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="assets/fonts/Manrope-SemiBold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/Manrope-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/styles.css">
+
+<script>
+  /* Antes da primeira pintura: sem isso, o conteúdo apareceria e depois sumiria.
+     Se a pessoa pediu menos movimento, a classe não entra e nada fica escondido. */
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.documentElement.classList.add('js', 'at-top');
+  }
+</script>
+<script src="assets/motion.js" defer></script>
+</head>
+
+<body>
+
+<a class="skip" href="#conteudo">Pular para o conteúdo</a>
+
+<!-- fundo: grade e halo, puramente decorativos -->
+<div class="backdrop-grid" aria-hidden="true"></div>
+<div class="backdrop-glow" aria-hidden="true"></div>
+
+<div class="nav-shell">
+  <header class="nav">
+    <a class="brand" href="#topo" aria-label="Folder Hub — início">
+      <span class="mark" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </span>
+      <span class="brand__name">Folder Hub</span>
+    </a>
+
+    <nav class="nav__links" aria-label="Seções">
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#recursos">Recursos</a>
+      <a class="pill pill--link" href="https://github.com/Rudhery/FolderHub/releases">v1.0.0</a>
+    </nav>
+  </header>
+</div>
+
+<main id="conteudo" class="wrap">
+
+  <section class="hero" id="topo">
+    <div class="hero__copy">
+      <p class="pill hero__badge">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Windows 11 · aplicativo local</span>
+      </p>
+      <h1 class="hero__title">Tenha todos os seus aplicativos organizados, bonitos e sempre à mão</h1>
+      <p class="hero__sub">O FolderHub transforma suas pastas em hubs personalizados para você encontrar e abrir tudo com muito mais rapidez</p>
+    </div>
+
+    <!-- réplica da janela do app, animada só com CSS -->
+    <div class="mock" data-parallax>
+      <div class="mock__glow" aria-hidden="true"></div>
+      <div class="mock__window">
+        <div class="mock__head">
+          <div class="mock__title">
+            <span class="mock__name">Folder Hub</span>
+            <span class="mock__hint">Escolha um aplicativo</span>
+          </div>
+          <span class="mock__close" aria-hidden="true">✕</span>
+        </div>
+
+        <div class="mock__grid">
+          <div class="card card--a">
+            <span class="card__tile"><span class="glyph glyph--circle"></span></span>
+            <span class="card__label">Chrome</span>
+          </div>
+          <div class="card card--b">
+            <span class="card__tile"><span class="glyph glyph--square"></span></span>
+            <span class="card__label">Rider</span>
+          </div>
+          <div class="card card--c">
+            <span class="card__tile"><span class="glyph glyph--outline"></span></span>
+            <span class="card__label">VS Code</span>
+          </div>
+        </div>
+
+        <div class="mock__foot">
+          <span class="mono">3 atalhos</span>
+          <span class="mono">↵ abrir · esc fechar</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="como-funciona" data-reveal>
+    <header class="section__head">
+      <p class="eyebrow">Como funciona</p>
+      <h2 class="section__title">Três passos, uma vez só</h2>
+    </header>
+
+    <ol class="steps" data-stagger>
+      <li class="step">
+        <span class="mono step__n">01</span>
+        <div class="step__body">
+          <h3 class="step__title">Escolha a pasta</h3>
+          <p class="step__text">Aponte para qualquer pasta do sistema. O Folder Hub lê os atalhos que já estão nela.</p>
+        </div>
+      </li>
+      <li class="step">
+        <span class="mono step__n">02</span>
+        <div class="step__body">
+          <h3 class="step__title">Organize os cards</h3>
+          <p class="step__text">Nome, ícone e ordem de cada aplicativo ficam do jeito que você definir.</p>
+        </div>
+      </li>
+      <li class="step">
+        <span class="mono step__n">03</span>
+        <div class="step__body">
+          <h3 class="step__title">Abra pelo hub</h3>
+          <p class="step__text">O modal aparece centralizado. Um clique ou Enter e o aplicativo sobe.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section class="section" id="recursos" data-reveal>
+    <header class="section__head">
+      <p class="eyebrow">Recursos</p>
+      <h2 class="section__title">O que está dentro</h2>
+    </header>
+
+    <ul class="features" data-stagger>
+      <li class="feature">
+        <h3 class="feature__title">Modal centralizado</h3>
+        <p class="feature__text">Aparece no centro da tela, sem barra de título e sem roubar o foco do resto.</p>
+      </li>
+      <li class="feature">
+        <h3 class="feature__title">Teclado primeiro</h3>
+        <p class="feature__text">Setas para navegar, Enter para abrir, Esc para fechar. Sem tocar no mouse.</p>
+      </li>
+      <li class="feature">
+        <h3 class="feature__title">Acrylic nativo</h3>
+        <p class="feature__text">Fundo com blur do Fluent Design, integrado ao tema escuro do Windows 11.</p>
+      </li>
+      <li class="feature">
+        <h3 class="feature__title">Vários hubs</h3>
+        <p class="feature__text">Um hub por contexto: trabalho, estudo, jogos. Cada pasta vira o seu próprio.</p>
+      </li>
+      <li class="feature">
+        <h3 class="feature__title">Ícones automáticos</h3>
+        <p class="feature__text">Extraídos do próprio executável, ou substituídos por um arquivo seu.</p>
+      </li>
+      <li class="feature">
+        <h3 class="feature__title">Local e leve</h3>
+        <p class="feature__text">Roda na sua máquina, sem conta, sem telemetria e sem nada saindo para a nuvem.</p>
+      </li>
+    </ul>
+  </section>
+
+  <section class="section" id="changelog" data-reveal>
+    <header class="section__head section__head--row">
+      <div>
+        <p class="eyebrow">Changelog</p>
+        <h2 class="section__title">Versão atual</h2>
+      </div>
+      <span class="pill">v1.0.0</span>
+    </header>
+
+    <ul class="log" data-stagger>
+      <li class="log__row">
+        <span class="mono log__v">v1.0.0</span>
+        <span class="log__text">Abas com várias pastas, atalho global, ordenação por arrastar e instalador.</span>
+      </li>
+      <li class="log__row">
+        <span class="mono log__v">v0.3.0</span>
+        <span class="log__text">Estado selecionado nos cards e navegação completa por teclado.</span>
+      </li>
+      <li class="log__row">
+        <span class="mono log__v">v0.2.0</span>
+        <span class="log__text">Fundo acrylic e novo ícone do aplicativo.</span>
+      </li>
+      <li class="log__row">
+        <span class="mono log__v">v0.1.0</span>
+        <span class="log__text">Primeira versão do modal com três atalhos.</span>
+      </li>
+    </ul>
+  </section>
+
+</main>
+
+<footer class="wrap foot">
+  <span class="mono foot__copy">Folder Hub · 2026</span>
+  <nav class="foot__links" aria-label="Rodapé">
+    <a href="#recursos">Recursos</a>
+    <a href="#changelog">Changelog</a>
+    <a href="https://github.com/Rudhery/FolderHub">Repositório</a>
+  </nav>
+</footer>
+
+</body>
+</html>

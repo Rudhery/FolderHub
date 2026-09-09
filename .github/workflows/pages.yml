@@ -1,0 +1,40 @@
+name: pages
+
+# Publica web/ no GitHub Pages.
+#
+# Está em workflow_dispatch (execução manual) de propósito: o repositório ainda
+# é privado, e Pages em repositório privado exige plano pago. Quando ele virar
+# público, habilite Pages em Settings → Pages (source: GitHub Actions) e
+# descomente o gatilho de push abaixo.
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'web/**'
+  #     - '.github/workflows/pages.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: web
+      - id: deploy
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,105 @@
+- generic [active] [ref=e1]:
+  - link "Pular para o conteúdo" [ref=e2] [cursor=pointer]:
+    - /url: "#conteudo"
+  - banner [ref=e3]:
+    - link "Folder Hub — início" [ref=e4] [cursor=pointer]:
+      - /url: "#topo"
+      - generic [ref=e9]: Folder Hub
+    - navigation "Seções" [ref=e10]:
+      - link "Como funciona" [ref=e11] [cursor=pointer]:
+        - /url: "#como-funciona"
+      - link "Recursos" [ref=e12] [cursor=pointer]:
+        - /url: "#recursos"
+      - link "v1.0.0" [ref=e13] [cursor=pointer]:
+        - /url: https://github.com/Rudhery/FolderHub/releases
+  - main [ref=e14]:
+    - generic [ref=e15]:
+      - generic [ref=e16]:
+        - paragraph [ref=e17]:
+          - generic [ref=e19]: Windows 11 · aplicativo local
+        - heading "Tenha todos os seus aplicativos organizados, bonitos e sempre à mão" [level=1] [ref=e20]
+        - paragraph [ref=e21]: O FolderHub transforma suas pastas em hubs personalizados para você encontrar e abrir tudo com muito mais rapidez
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - generic [ref=e25]:
+            - generic [ref=e26]: Folder Hub
+            - generic [ref=e27]: Escolha um aplicativo
+          - generic [aria-hidden] [ref=e28]: ✕
+        - generic [ref=e29]:
+          - generic [ref=e30]: Chrome
+          - generic [ref=e34]: Rider
+          - generic [ref=e38]: VS Code
+        - generic [ref=e42]:
+          - generic [ref=e43]: 3 atalhos
+          - generic [ref=e44]: ↵ abrir · esc fechar
+    - generic [ref=e45]:
+      - generic [ref=e46]:
+        - paragraph [ref=e47]: Como funciona
+        - heading "Três passos, uma vez só" [level=2] [ref=e48]
+      - list [ref=e49]:
+        - listitem [ref=e50]:
+          - generic [ref=e51]: "01"
+          - generic [ref=e52]:
+            - heading "Escolha a pasta" [level=3] [ref=e53]
+            - paragraph [ref=e54]: Aponte para qualquer pasta do sistema. O Folder Hub lê os atalhos que já estão nela.
+        - listitem [ref=e55]:
+          - generic [ref=e56]: "02"
+          - generic [ref=e57]:
+            - heading "Organize os cards" [level=3] [ref=e58]
+            - paragraph [ref=e59]: Nome, ícone e ordem de cada aplicativo ficam do jeito que você definir.
+        - listitem [ref=e60]:
+          - generic [ref=e61]: "03"
+          - generic [ref=e62]:
+            - heading "Abra pelo hub" [level=3] [ref=e63]
+            - paragraph [ref=e64]: O modal aparece centralizado. Um clique ou Enter e o aplicativo sobe.
+    - generic [ref=e65]:
+      - generic [ref=e66]:
+        - paragraph [ref=e67]: Recursos
+        - heading "O que está dentro" [level=2] [ref=e68]
+      - list [ref=e69]:
+        - listitem [ref=e70]:
+          - heading "Modal centralizado" [level=3] [ref=e71]
+          - paragraph [ref=e72]: Aparece no centro da tela, sem barra de título e sem roubar o foco do resto.
+        - listitem [ref=e73]:
+          - heading "Teclado primeiro" [level=3] [ref=e74]
+          - paragraph [ref=e75]: Setas para navegar, Enter para abrir, Esc para fechar. Sem tocar no mouse.
+        - listitem [ref=e76]:
+          - heading "Acrylic nativo" [level=3] [ref=e77]
+          - paragraph [ref=e78]: Fundo com blur do Fluent Design, integrado ao tema escuro do Windows 11.
+        - listitem [ref=e79]:
+          - heading "Vários hubs" [level=3] [ref=e80]
+          - paragraph [ref=e81]: "Um hub por contexto: trabalho, estudo, jogos. Cada pasta vira o seu próprio."
+        - listitem [ref=e82]:
+          - heading "Ícones automáticos" [level=3] [ref=e83]
+          - paragraph [ref=e84]: Extraídos do próprio executável, ou substituídos por um arquivo seu.
+        - listitem [ref=e85]:
+          - heading "Local e leve" [level=3] [ref=e86]
+          - paragraph [ref=e87]: Roda na sua máquina, sem conta, sem telemetria e sem nada saindo para a nuvem.
+    - generic [ref=e88]:
+      - generic [ref=e89]:
+        - generic [ref=e90]:
+          - paragraph [ref=e91]: Changelog
+          - heading "Versão atual" [level=2] [ref=e92]
+        - generic [ref=e93]: v1.0.0
+      - list [ref=e94]:
+        - listitem [ref=e95]:
+          - generic [ref=e96]: v1.0.0
+          - generic [ref=e97]: Abas com várias pastas, atalho global, ordenação por arrastar e instalador.
+        - listitem [ref=e98]:
+          - generic [ref=e99]: v0.3.0
+          - generic [ref=e100]: Estado selecionado nos cards e navegação completa por teclado.
+        - listitem [ref=e101]:
+          - generic [ref=e102]: v0.2.0
+          - generic [ref=e103]: Fundo acrylic e novo ícone do aplicativo.
+        - listitem [ref=e104]:
+          - generic [ref=e105]: v0.1.0
+          - generic [ref=e106]: Primeira versão do modal com três atalhos.
+  - contentinfo [ref=e107]:
+    - generic [ref=e108]: Folder Hub · 2026
+    - navigation "Rodapé" [ref=e109]:
+      - link "Recursos" [ref=e110] [cursor=pointer]:
+        - /url: "#recursos"
+      - link "Changelog" [ref=e111] [cursor=pointer]:
+        - /url: "#changelog"
+      - link "Repositório" [ref=e112] [cursor=pointer]:
+        - /url: https://github.com/Rudhery/FolderHub
