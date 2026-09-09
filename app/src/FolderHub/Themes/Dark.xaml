@@ -27,6 +27,11 @@
     <SolidColorBrush x:Key="TextFaint" Color="#6BEEF1F4" />
     <!-- glifo neutro do design -->
     <SolidColorBrush x:Key="Glyph" Color="#8FA6BD" />
+    <SolidColorBrush x:Key="GlyphHover" Color="#B3C5D6" />
+    <SolidColorBrush x:Key="GlyphSelected" Color="#DBE4EC" />
+
+    <!-- véu do arrastar e soltar: a superfície, quase opaca -->
+    <SolidColorBrush x:Key="Scrim" Color="#E61A1C20" />
 
     <!-- card: rgba(255,255,255,0.028) / borda rgba(255,255,255,0.05) -->
     <SolidColorBrush x:Key="CardBg" Color="#07FFFFFF" />
@@ -63,13 +68,39 @@
 
     <Duration x:Key="StateDuration">0:0:0.15</Duration>
 
+    <!--
+        ============ FORMA ============
+        Nomeados pelo papel, não pelo valor: dois elementos com o mesmo raio hoje
+        podem divergir amanhã sem virar caça ao número no XAML.
+    -->
+    <CornerRadius x:Key="RadiusWindow">8</CornerRadius>
+    <CornerRadius x:Key="RadiusCard">14</CornerRadius>
+    <CornerRadius x:Key="RadiusCardRing">16</CornerRadius>
+    <CornerRadius x:Key="RadiusTile">12</CornerRadius>
+    <CornerRadius x:Key="RadiusTab">9</CornerRadius>
+    <CornerRadius x:Key="RadiusControl">8</CornerRadius>
+    <CornerRadius x:Key="RadiusButton">6</CornerRadius>
+    <CornerRadius x:Key="RadiusQuiet">10</CornerRadius>
+    <CornerRadius x:Key="RadiusMenu">12</CornerRadius>
+    <CornerRadius x:Key="RadiusMenuItem">7</CornerRadius>
+    <CornerRadius x:Key="RadiusThumb">3</CornerRadius>
+
+    <!-- ============ ESCALA TIPOGRÁFICA ============ -->
+    <sys:Double x:Key="SizeTitle">14</sys:Double>
+    <sys:Double x:Key="SizeInitial">15</sys:Double>
+    <sys:Double x:Key="SizeBody">12.5</sys:Double>
+    <sys:Double x:Key="SizeMeta">11</sys:Double>
+    <sys:Double x:Key="SizeGlyph">11</sys:Double>
+    <sys:Double x:Key="SizeGlyphLarge">17</sys:Double>
+    <sys:Double x:Key="SizeGlyphSmall">10</sys:Double>
+
     <!-- ============ SCROLLBAR ============ -->
     <Style x:Key="ThinScrollThumb" TargetType="Thumb">
         <Setter Property="IsTabStop" Value="False" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Thumb">
-                    <Border x:Name="B" Margin="3,0" Background="#1FFFFFFF" CornerRadius="3" />
+                    <Border x:Name="B" Margin="3,0" Background="#1FFFFFFF" CornerRadius="{StaticResource RadiusThumb}" />
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="B" Property="Background" Value="#3DFFFFFF" />
@@ -117,13 +148,13 @@
         <Setter Property="Margin" Value="4,0,0,0" />
         <Setter Property="Foreground" Value="{StaticResource TextMuted}" />
         <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
-        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontSize" Value="{StaticResource SizeGlyph}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Focusable" Value="False" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="B" Background="Transparent" CornerRadius="6">
+                    <Border x:Name="B" Background="Transparent" CornerRadius="{StaticResource RadiusButton}">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
@@ -146,7 +177,7 @@
         <Setter Property="Padding" Value="18,0" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
-        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="FontSize" Value="{StaticResource SizeBody}" />
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
         <Setter Property="Template">
@@ -156,7 +187,7 @@
                             Background="{StaticResource CardBg}"
                             BorderBrush="{StaticResource CardBorder}"
                             BorderThickness="1"
-                            CornerRadius="10">
+                            CornerRadius="{StaticResource RadiusQuiet}">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
@@ -180,12 +211,12 @@
     <!--  ============ MENU DE CONTEXTO ============  -->
     <Style x:Key="DarkMenuItem" TargetType="MenuItem">
         <Setter Property="Foreground" Value="{StaticResource TextLabel}" />
-        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="FontSize" Value="{StaticResource SizeBody}" />
         <Setter Property="Height" Value="30" />
         <Setter Property="Template">
         <Setter.Value>
             <ControlTemplate TargetType="MenuItem">
-                <Border x:Name="B" Padding="10,0" Background="Transparent" CornerRadius="7">
+                <Border x:Name="B" Padding="10,0" Background="Transparent" CornerRadius="{StaticResource RadiusMenuItem}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="19" />
@@ -194,7 +225,7 @@
                     <TextBlock Grid.Column="0"
                                VerticalAlignment="Center"
                                FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                               FontSize="10"
+                               FontSize="{StaticResource SizeGlyphSmall}"
                                Foreground="{StaticResource TextPrimary}"
                                Text="&#xE73E;"
                                Visibility="{Binding IsChecked, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BoolToVis}}" />
@@ -231,7 +262,7 @@
                         Background="#F51A1C20"
                         BorderBrush="{StaticResource SurfaceBorder}"
                         BorderThickness="1"
-                        CornerRadius="12">
+                        CornerRadius="{StaticResource RadiusMenu}">
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="32" Opacity="0.7" ShadowDepth="6" Color="Black" />
                 </Border.Effect>
@@ -250,7 +281,7 @@
         <Setter Property="SelectionBrush" Value="#8FA6BD" />
         <Setter Property="SelectionOpacity" Value="0.35" />
         <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
-        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="FontSize" Value="{StaticResource SizeBody}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="VerticalContentAlignment" Value="Center" />

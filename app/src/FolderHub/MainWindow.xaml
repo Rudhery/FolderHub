@@ -63,10 +63,10 @@
                                 Background="{StaticResource CardBg}"
                                 BorderBrush="{StaticResource CardBorder}"
                                 BorderThickness="1"
-                                CornerRadius="9">
+                                CornerRadius="{StaticResource RadiusTab}">
                             <TextBlock x:Name="Label"
                                        VerticalAlignment="Center"
-                                       FontSize="12.5"
+                                       FontSize="{StaticResource SizeBody}"
                                        FontWeight="Medium"
                                        Foreground="{StaticResource TextLabel}"
                                        Text="{Binding Name}" />
@@ -181,26 +181,26 @@
                                     Margin="-2"
                                     BorderBrush="{StaticResource CardRing}"
                                     BorderThickness="2"
-                                    CornerRadius="16"
+                                    CornerRadius="{StaticResource RadiusCardRing}"
                                     Opacity="0" />
 
                             <Border x:Name="StateNormal"
                                     Background="{StaticResource CardBg}"
                                     BorderBrush="{StaticResource CardBorder}"
                                     BorderThickness="1"
-                                    CornerRadius="14"
+                                    CornerRadius="{StaticResource RadiusCard}"
                                     Opacity="1" />
                             <Border x:Name="StateHover"
                                     Background="{StaticResource CardBgHover}"
                                     BorderBrush="{StaticResource CardBorderHover}"
                                     BorderThickness="1"
-                                    CornerRadius="14"
+                                    CornerRadius="{StaticResource RadiusCard}"
                                     Opacity="0" />
                             <Border x:Name="StateSelected"
                                     Background="{StaticResource CardBgSelected}"
                                     BorderBrush="{StaticResource CardBorderSelected}"
                                     BorderThickness="1"
-                                    CornerRadius="14"
+                                    CornerRadius="{StaticResource RadiusCard}"
                                     Opacity="0" />
 
                             <!--  padding: 24px 12px 18px  ·  gap: 14px  -->
@@ -210,25 +210,25 @@
                                             Background="{StaticResource TileBg}"
                                             BorderBrush="{StaticResource TileBorder}"
                                             BorderThickness="1"
-                                            CornerRadius="12"
+                                            CornerRadius="{StaticResource RadiusTile}"
                                             Opacity="1" />
                                     <Border x:Name="TileHover"
                                             Background="{StaticResource TileBgHover}"
                                             BorderBrush="{StaticResource TileBorderHover}"
                                             BorderThickness="1"
-                                            CornerRadius="12"
+                                            CornerRadius="{StaticResource RadiusTile}"
                                             Opacity="0" />
                                     <Border x:Name="TileSelected"
                                             Background="{StaticResource TileBgSelected}"
                                             BorderBrush="{StaticResource TileBorderSelected}"
                                             BorderThickness="1"
-                                            CornerRadius="12"
+                                            CornerRadius="{StaticResource RadiusTile}"
                                             Opacity="0" />
 
                                     <TextBlock x:Name="Initial"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
-                                               FontSize="15"
+                                               FontSize="{StaticResource SizeInitial}"
                                                FontWeight="SemiBold"
                                                Foreground="{StaticResource Glyph}"
                                                Text="{Binding Initial}"
@@ -245,7 +245,7 @@
                                 <TextBlock x:Name="Label"
                                            Height="32"
                                            Margin="0,14,0,0"
-                                           FontSize="12.5"
+                                           FontSize="{StaticResource SizeBody}"
                                            FontWeight="Medium"
                                            Foreground="{StaticResource TextLabel}"
                                            LineHeight="16"
@@ -264,7 +264,7 @@
                                     <Condition Property="IsSelected" Value="False" />
                                 </MultiTrigger.Conditions>
                                 <Setter TargetName="Label" Property="Foreground" Value="{StaticResource TextPrimary}" />
-                                <Setter TargetName="Initial" Property="Foreground" Value="#B3C5D6" />
+                                <Setter TargetName="Initial" Property="Foreground" Value="{StaticResource GlyphHover}" />
                                 <MultiTrigger.EnterActions>
                                     <BeginStoryboard Storyboard="{StaticResource ToHover}" />
                                 </MultiTrigger.EnterActions>
@@ -276,7 +276,7 @@
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter TargetName="Label" Property="Foreground" Value="{StaticResource TextStrong}" />
                                 <Setter TargetName="Label" Property="FontWeight" Value="SemiBold" />
-                                <Setter TargetName="Initial" Property="Foreground" Value="#DBE4EC" />
+                                <Setter TargetName="Initial" Property="Foreground" Value="{StaticResource GlyphSelected}" />
                                 <Trigger.EnterActions>
                                     <BeginStoryboard Storyboard="{StaticResource ToSelected}" />
                                 </Trigger.EnterActions>
@@ -297,7 +297,7 @@
             Background="{StaticResource Surface}"
             BorderBrush="{StaticResource SurfaceBorder}"
             BorderThickness="1"
-            CornerRadius="8"
+            CornerRadius="{StaticResource RadiusWindow}"
             Opacity="0">
         <Border.RenderTransform>
             <TranslateTransform x:Name="ShellLift" Y="8" />
@@ -328,7 +328,7 @@
                     <TextBlock x:Name="TitleText"
                                MaxWidth="170"
                                HorizontalAlignment="Left"
-                               FontSize="14"
+                               FontSize="{StaticResource SizeTitle}"
                                FontWeight="SemiBold"
                                Foreground="{StaticResource TextPrimary}"
                                Text="Folder Hub"
@@ -337,7 +337,7 @@
                                MaxWidth="180"
                                Margin="0,3,0,0"
                                HorizontalAlignment="Left"
-                               FontSize="12.5"
+                               FontSize="{StaticResource SizeBody}"
                                Foreground="{StaticResource TextFaint}"
                                Text="Escolha um aplicativo"
                                TextTrimming="CharacterEllipsis" />
@@ -351,7 +351,7 @@
                         Background="{StaticResource ControlBg}"
                         BorderBrush="{StaticResource ControlBorder}"
                         BorderThickness="1"
-                        CornerRadius="8">
+                        CornerRadius="{StaticResource RadiusControl}">
                     <Grid Margin="9,0,9,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -361,13 +361,13 @@
                                    Margin="0,0,7,0"
                                    VerticalAlignment="Center"
                                    FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                   FontSize="11"
+                                   FontSize="{StaticResource SizeGlyph}"
                                    Foreground="{StaticResource TextMuted}"
                                    Text="&#xE721;" />
                         <Grid Grid.Column="1">
                             <TextBlock x:Name="SearchPlaceholder"
                                        VerticalAlignment="Center"
-                                       FontSize="12.5"
+                                       FontSize="{StaticResource SizeBody}"
                                        Foreground="{StaticResource TextFaint}"
                                        IsHitTestVisible="False"
                                        Text="Buscar" />
@@ -486,18 +486,18 @@
                         Background="{StaticResource TileBg}"
                         BorderBrush="{StaticResource TileBorder}"
                         BorderThickness="1"
-                        CornerRadius="12">
+                        CornerRadius="{StaticResource RadiusTile}">
                     <TextBlock HorizontalAlignment="Center"
                                VerticalAlignment="Center"
                                FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                               FontSize="17"
+                               FontSize="{StaticResource SizeGlyphLarge}"
                                Foreground="{StaticResource Glyph}"
                                Text="&#xE8B7;" />
                 </Border>
                 <TextBlock x:Name="EmptyTitle"
                            Margin="0,18,0,0"
                            HorizontalAlignment="Center"
-                           FontSize="14"
+                           FontSize="{StaticResource SizeTitle}"
                            FontWeight="SemiBold"
                            Foreground="{StaticResource TextPrimary}"
                            Text="Nenhum atalho aqui" />
@@ -505,7 +505,7 @@
                            MaxWidth="330"
                            Margin="0,6,0,0"
                            HorizontalAlignment="Center"
-                           FontSize="12.5"
+                           FontSize="{StaticResource SizeBody}"
                            Foreground="{StaticResource TextFaint}"
                            Text="Solte atalhos (.lnk, .url, .exe) dentro da pasta e eles aparecem aqui na hora."
                            TextAlignment="Center"
@@ -524,12 +524,12 @@
                     <TextBlock x:Name="CountText"
                                HorizontalAlignment="Left"
                                FontFamily="{StaticResource MonoFont}"
-                               FontSize="11"
+                               FontSize="{StaticResource SizeMeta}"
                                Foreground="{StaticResource TextMeta}"
                                Text="0 atalhos" />
                     <TextBlock HorizontalAlignment="Right"
                                FontFamily="{StaticResource MonoFont}"
-                               FontSize="11"
+                               FontSize="{StaticResource SizeMeta}"
                                Foreground="{StaticResource TextMeta}"
                                Text="&#x21B5; abrir &#xB7; esc fechar" />
                 </Grid>
@@ -540,8 +540,8 @@
                     Grid.Row="0"
                     Grid.RowSpan="4"
                     Margin="-30,-30,-30,-24"
-                    Background="#E61A1C20"
-                    CornerRadius="8"
+                    Background="{StaticResource Scrim}"
+                    CornerRadius="{StaticResource RadiusWindow}"
                     IsHitTestVisible="False"
                     Opacity="0"
                     Visibility="Collapsed">
@@ -552,11 +552,11 @@
                             Background="{StaticResource TileBgSelected}"
                             BorderBrush="{StaticResource TileBorderSelected}"
                             BorderThickness="1"
-                            CornerRadius="14" />
+                            CornerRadius="{StaticResource RadiusCard}" />
                     <TextBlock x:Name="DropText"
                                Margin="0,18,0,0"
                                HorizontalAlignment="Center"
-                               FontSize="14"
+                               FontSize="{StaticResource SizeTitle}"
                                FontWeight="SemiBold"
                                Foreground="{StaticResource TextPrimary}"
                                Text="Solte para usar esta pasta" />
