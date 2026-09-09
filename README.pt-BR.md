@@ -19,6 +19,14 @@ Um mini launcher para Windows 11 que transforma qualquer pasta de atalhos num hu
 
 ---
 
+## Repositório
+
+```
+app/     o launcher em si — WPF, .NET 10
+web/     a landing page (ainda não feita)
+docs/    as imagens usadas neste README
+```
+
 ## A ideia
 
 Você aponta o FolderHub para uma pasta. Ele lê nome e ícone de cada atalho lá dentro,
@@ -56,7 +64,7 @@ Ou compile você mesmo:
 
 ```powershell
 git clone https://github.com/Rudhery/FolderHub.git
-cd FolderHub
+cd FolderHub\app
 .\publish.ps1                 # dist\FolderHub.exe, ~700 KB, precisa do .NET 10 Desktop Runtime
 .\publish.ps1 -SelfContained  # ~124 MB, roda em qualquer Windows 11 sem instalar nada
 .\publish.ps1 -Installer      # build autocontida + o instalador (precisa do Inno Setup 6)
@@ -107,7 +115,7 @@ FolderHub.exe "D:\Jogos"
 FolderHub.exe "D:\Trabalho\Ferramentas"
 
 # ou deixe o script montar
-.\tools\create-shortcut.ps1 -Folder "D:\Jogos" -Name "Hub de Jogos" -Desktop
+.\app\tools\create-shortcut.ps1 -Folder "D:\Jogos" -Name "Hub de Jogos" -Desktop
 ```
 
 O argumento nunca sobrescreve a pasta padrão salva na configuração.
@@ -202,7 +210,7 @@ dimensiona, sem recompilar:
 </ResourceDictionary>
 ```
 
-`themes/example.xaml` já vem pronto para copiar, e as chaves são as mesmas de
+`app/themes/example.xaml` já vem pronto para copiar, e as chaves são as mesmas de
 `app/src/FolderHub/Themes/Dark.xaml`. Tema quebrado é registrado no log e
 ignorado, não derruba o app. O arquivo é carregado como XAML, então trate com a
 mesma confiança da config que aponta para ele.
@@ -222,7 +230,7 @@ hierarquia vem de branco em opacidades diferentes sobre o acrílico.
 | tipografia | Manrope 400/500/600 · JetBrains Mono nos metadados |
 
 As duas fontes ficam embutidas no executável (SIL OFL, licenças em
-`src/FolderHub/Assets/Fonts`), então o app não depende de nada instalado na máquina.
+`app/src/FolderHub/Assets/Fonts`), então o app não depende de nada instalado na máquina.
 
 Os cantos da janela são os ~8px que o próprio Windows aplica, não um raio customizado:
 um raio maior exigiria recortar a janela por conta própria, e o acrílico do sistema iria
@@ -231,7 +239,7 @@ embora junto.
 O ícone — três barras empilhadas, os atalhos dentro do hub — é arte gerada:
 
 ```powershell
-python tools/make-icon.py     # escreve Assets/folderhub.ico, de 16px a 256px
+python app/tools/make-icon.py   # escreve Assets/folderhub.ico, de 16px a 256px
 ```
 
 ## Como foi feito
@@ -239,7 +247,7 @@ python tools/make-icon.py     # escreve Assets/folderhub.ico, de 16px a 256px
 WPF em .NET 10, sem dependências externas.
 
 ```
-src/FolderHub/
+app/src/FolderHub/
   App.xaml.cs               inicialização, argumentos, instância única
   MainWindow.xaml(.cs)      a janela em si: carga, busca, teclado, dimensionamento
   MainWindow.Tabs.cs        as abas e o carregamento preguiçoso
@@ -263,9 +271,10 @@ src/FolderHub/
     WindowEffects.cs        acrílico, cantos arredondados, modo escuro
     Log.cs                  log em arquivo, para falha engolida deixar rastro
   Interop/Native.cs         DWM, Shell, GDI, user32
-tests/FolderHub.Tests/      xUnit
-tools/                      gerador de ícone, script de atalho
-installer/FolderHub.iss     Inno Setup
+app/tests/FolderHub.Tests/  xUnit
+app/tools/                  gerador de ícone, script de atalho
+app/themes/example.xaml     ponto de partida para um tema próprio
+app/installer/FolderHub.iss Inno Setup
 ```
 
 Decisões que valem citar:
@@ -294,7 +303,7 @@ Decisões que valem citar:
 ## Testes
 
 ```powershell
-dotnet test
+dotnet test app/FolderHub.sln
 ```
 
 66 testes sobre a lógica pura: o que o scanner recolhe, os quatro modos de ordenação

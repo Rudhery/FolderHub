@@ -19,6 +19,14 @@ A small Windows 11 launcher that turns any folder of shortcuts into a visual hub
 
 ---
 
+## Repository
+
+```
+app/     the launcher itself — WPF, .NET 10
+web/     the landing page (not built yet)
+docs/    screenshots used by this README
+```
+
 ## The idea
 
 Point FolderHub at a folder. It reads the name and icon of every shortcut inside,
@@ -56,7 +64,7 @@ Or build it yourself:
 
 ```powershell
 git clone https://github.com/Rudhery/FolderHub.git
-cd FolderHub
+cd FolderHub\app
 .\publish.ps1                 # dist\FolderHub.exe, ~700 KB, needs the .NET 10 Desktop Runtime
 .\publish.ps1 -SelfContained  # ~124 MB, runs on any Windows 11 with nothing installed
 .\publish.ps1 -Installer      # self-contained build + the setup (needs Inno Setup 6)
@@ -105,7 +113,7 @@ FolderHub.exe "D:\Games"
 FolderHub.exe "D:\Work\Tools"
 
 # or let the helper build them for you
-.\tools\create-shortcut.ps1 -Folder "D:\Games" -Name "Games Hub" -Desktop
+.\app\tools\create-shortcut.ps1 -Folder "D:\Games" -Name "Games Hub" -Desktop
 ```
 
 The argument never overwrites the default folder saved in the config.
@@ -199,7 +207,7 @@ from, without recompiling:
 </ResourceDictionary>
 ```
 
-`themes/example.xaml` is a working starting point, and the keys are the ones in
+`app/themes/example.xaml` is a working starting point, and the keys are the ones in
 `app/src/FolderHub/Themes/Dark.xaml`. A broken theme is logged and ignored rather
 than fatal. Note the file is loaded as XAML, so treat it with the same trust as
 the config that points at it.
@@ -218,7 +226,7 @@ every bit of hierarchy comes from white at different opacities over the acrylic.
 | transition | 150 ms on background and border only — no lift, no glow |
 | type | Manrope 400/500/600 · JetBrains Mono for metadata |
 
-Both fonts are embedded in the executable (SIL OFL, licences in `src/FolderHub/Assets/Fonts`),
+Both fonts are embedded in the executable (SIL OFL, licences in `app/src/FolderHub/Assets/Fonts`),
 so the app never depends on what's installed on the machine.
 
 The window corners are the ~8px Windows rounds them to, not a custom radius: a larger
@@ -227,7 +235,7 @@ one would mean clipping the window myself, and the system acrylic would be lost 
 The icon — three stacked bars, the shortcuts inside the hub — is generated art:
 
 ```powershell
-python tools/make-icon.py     # writes Assets/folderhub.ico, 16px through 256px
+python app/tools/make-icon.py   # writes Assets/folderhub.ico, 16px through 256px
 ```
 
 ## How it works
@@ -235,7 +243,7 @@ python tools/make-icon.py     # writes Assets/folderhub.ico, 16px through 256px
 WPF on .NET 10, no external dependencies.
 
 ```
-src/FolderHub/
+app/src/FolderHub/
   App.xaml.cs               startup, arguments, single instance
   MainWindow.xaml(.cs)      the window itself: loading, search, keyboard, sizing
   MainWindow.Tabs.cs        tabs and their lazy loading
@@ -259,9 +267,10 @@ src/FolderHub/
     WindowEffects.cs        acrylic, rounded corners, dark mode
     Log.cs                  file log, so swallowed failures leave a trace
   Interop/Native.cs         DWM, Shell, GDI, user32
-tests/FolderHub.Tests/      xUnit
-tools/                      icon generator, shortcut helper
-installer/FolderHub.iss     Inno Setup
+app/tests/FolderHub.Tests/  xUnit
+app/tools/                  icon generator, shortcut helper
+app/themes/example.xaml     starting point for a custom theme
+app/installer/FolderHub.iss Inno Setup
 ```
 
 A few decisions worth calling out:
@@ -290,7 +299,7 @@ A few decisions worth calling out:
 ## Tests
 
 ```powershell
-dotnet test
+dotnet test app/FolderHub.sln
 ```
 
 66 tests over the pure logic: what the scanner picks up, the four sort modes (including

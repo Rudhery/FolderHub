@@ -18,17 +18,17 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore app/FolderHub.sln
 
       - name: Build
-        run: dotnet build --no-restore -c Release
+        run: dotnet build app/FolderHub.sln --no-restore -c Release
 
       - name: Test
-        run: dotnet test --no-build -c Release
+        run: dotnet test app/FolderHub.sln --no-build -c Release
 
       - name: Publish
         run: >
-          dotnet publish src/FolderHub/FolderHub.csproj
+          dotnet publish app/src/FolderHub/FolderHub.csproj
           -c Release -r win-x64 -o dist
           -p:SelfContained=false
           -p:PublishSingleFile=true
