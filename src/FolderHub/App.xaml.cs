@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using FolderHub.Models;
 using FolderHub.Services;
 
 namespace FolderHub;
@@ -78,22 +79,29 @@ public partial class App : Application
             Config.Save();
         }
 
-        folder ??= Config.FolderPath;
+        // Pasta no argumento abre sozinha, como uma sessão avulsa. Sem argumento,
+        // o hub é o conjunto de abas da configuração.
+        List<HubTab> tabs = folder is not null
+            ? [new HubTab { Path = folder }]
+            : [.. Config.Tabs
+                    .Where(t => Directory.Exists(t.Path))
+                    .Select(t => new HubTab { Path = t.Path, CustomName = t.Name })];
 
-        if (string.IsNullOrWhiteSpace(folder) || !Directory.Exists(folder))
+        if (tabs.Count == 0)
         {
-            folder = AskForFolder();
-            if (folder == null)
+            string? chosen = AskForFolder();
+            if (chosen == null)
             {
                 Shutdown();
                 return;
             }
 
-            Config.FolderPath = folder;
+            tabs.Add(new HubTab { Path = chosen });
+            Config.Tabs = [new TabConfig { Path = chosen }];
             Config.Save();
         }
 
-        var window = new MainWindow(folder);
+        var window = new MainWindow(tabs);
         MainWindow = window;
         window.Show();
     }

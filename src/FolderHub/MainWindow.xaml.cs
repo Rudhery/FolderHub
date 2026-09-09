@@ -25,14 +25,17 @@ public partial class MainWindow : Window
     private const double MinShellWidth = 562;
 
     private readonly ObservableCollection<AppItem> _visible = [];
-    private readonly List<AppItem> _all = [];
-    private readonly Dictionary<string, ImageSource> _iconCache = new(StringComparer.OrdinalIgnoreCase);
+
+    // Apontam para as coleções da aba ativa; trocar de aba só troca a referência,
+    // e o resto do código segue sem saber que existe aba.
+    private List<AppItem> _all = [];
+    private Dictionary<string, ImageSource> _iconCache = new(StringComparer.OrdinalIgnoreCase);
 
     private readonly DispatcherTimer _reloadDebounce;
     private FileSystemWatcher? _watcher;
     private CancellationTokenSource _iconCts = new();
 
-    private string _folder;
+    private string _folder = string.Empty;
     private int _columns = 4;
     private bool _suppressBlurClose;
     private bool _closing;
@@ -46,14 +49,12 @@ public partial class MainWindow : Window
     private bool _dragCompleted;
     private bool _animateIntro;
 
-    public MainWindow(string folder)
+    public MainWindow(IReadOnlyList<HubTab> tabs)
     {
         InitializeComponent();
 
         // Precisa ser antes do handle nascer: mudar depois faz o WPF recriar o HWND.
         ShowInTaskbar = !App.Background;
-
-        _folder = folder;
 
         _reloadDebounce = new DispatcherTimer(DispatcherPriority.Background)
         {
@@ -73,7 +74,8 @@ public partial class MainWindow : Window
         Cards.DragOver += Cards_DragOver;
         Cards.Drop += Cards_Drop;
 
-        Reload(resize: true, animate: true);
+        BuildTabs(tabs);
+        ActivateTab(tabs[0], resize: true, animate: true);
     }
 
     // ----------------------------------------------------------- ciclo de vida
@@ -88,7 +90,6 @@ public partial class MainWindow : Window
     protected override void OnContentRendered(EventArgs e)
     {
         base.OnContentRendered(e);
-        StartWatching();
 
         // Lançado junto com o Windows: nasce escondido, esperando o atalho.
         if (App.StartHidden)
@@ -159,6 +160,8 @@ public partial class MainWindow : Window
     private void StartIconLoad(List<AppItem> pending, CancellationToken token)
     {
         if (pending.Count == 0) return;
+
+        Log.Info($"extraindo {pending.Count} ícone(s) de {_folder}");
 
         // Shell COM é apartment-threaded: uma STA dedicada é o caminho mais previsível.
         var thread = new Thread(() =>
@@ -279,17 +282,18 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>Troca a pasta da aba ativa (Ctrl+O). Para somar uma pasta, use AddTab.</summary>
     private void SetFolder(string folder, bool persist = true)
     {
+        if (_tab is null) return;
+
+        _tab.Path = folder;
+        _tab.Icons.Clear();
+        _tab.Count = FolderScanner.CountSupported(folder);
         _folder = folder;
 
-        if (persist)
-        {
-            App.Config.FolderPath = folder;
-            App.Config.Save();
-        }
+        if (persist) PersistTabs();
 
-        _iconCache.Clear();
         SearchBox.Clear();
         Reload(resize: true, animate: true);
         StartWatching();
@@ -299,6 +303,9 @@ public partial class MainWindow : Window
 
     private void ResizeToContent(int count)
     {
+        // A janela cabe na maior aba, senão ela pularia de tamanho a cada troca.
+        count = Math.Max(count, LargestTabCount());
+
         int max = Math.Clamp(App.Config.MaxColumns, 3, 10);
         int cols = count <= 0 ? 3 : BalancedColumns(count, max);
         _columns = cols;
@@ -577,6 +584,7 @@ public partial class MainWindow : Window
         if (e.Handled) return;
 
         bool ctrl = (Keyboard.Modifiers & ModifierKeys.Control) != 0;
+        bool shift = (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
 
         switch (e.Key)
         {
@@ -599,6 +607,16 @@ public partial class MainWindow : Window
 
             case Key.O when ctrl:
                 ChangeFolder();
+                e.Handled = true;
+                return;
+
+            case Key.Tab when ctrl:
+                MoveTab(shift ? -1 : 1);
+                e.Handled = true;
+                return;
+
+            case >= Key.D1 and <= Key.D9 when ctrl:
+                ActivateTabAt(e.Key - Key.D1);
                 e.Handled = true;
                 return;
 
@@ -735,9 +753,10 @@ public partial class MainWindow : Window
 
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths || paths.Length == 0) return;
 
+        // Pasta solta na janela vira aba nova (ou vai para a que já existe).
         if (paths.Length == 1 && Directory.Exists(paths[0]))
         {
-            SetFolder(paths[0]);
+            AddTab(paths[0]);
             return;
         }
 
@@ -762,7 +781,7 @@ public partial class MainWindow : Window
         }
 
         bool isFolder = paths.Length == 1 && Directory.Exists(paths[0]);
-        DropText.Text = isFolder ? "Solte para usar esta pasta" : "Solte para adicionar ao hub";
+        DropText.Text = isFolder ? "Solte para abrir esta pasta em uma aba" : "Solte para adicionar ao hub";
         e.Effects = isFolder ? DragDropEffects.Link : DragDropEffects.Copy;
         e.Handled = true;
 

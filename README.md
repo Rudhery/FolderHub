@@ -42,6 +42,7 @@ app is the order you see in Explorer, and vice versa.
 - **Type to filter**, arrow keys to move, `Enter` to launch.
 - **Drag to reorder**, saved into the folder itself as filename prefixes.
 - **Drag and drop** — drop a folder to switch hubs, drop programs to add them.
+- **Tabs** — several folders in one hub, each loaded only when you open it.
 - **Many hubs** — one shortcut per folder, each pinnable to the taskbar.
 - **Live** — add or remove a shortcut while the hub is open and it updates itself.
 
@@ -71,6 +72,29 @@ The installer puts a shortcut in the Start Menu — right-click it and choose
 **Pin to taskbar**. Pinning a bare `.exe` is unreliable on Windows 11, and a pinned
 `.exe` always starts with no arguments, which is exactly what you don't want when
 you keep more than one hub.
+
+### Tabs
+
+A hub is not one folder. List them in the config and each becomes a tab:
+
+```jsonc
+"tabs": [
+  { "path": "D:\\Work",  "name": "Work" },
+  { "path": "D:\\Games", "name": "Games" },
+  { "path": "D:\\Tools" }               // no name = the folder's own name
+]
+```
+
+Drop a folder on the window to add one, right-click a tab to remove it. With a
+single tab the strip stays hidden, so a one-folder hub looks exactly as before.
+
+**Loading is lazy where it actually costs.** On startup each tab does a cheap
+count — just reading file extensions, no file is opened — and that is what sizes
+the window to the largest tab, so it never resizes when you switch. The real
+listing, and above all the icon extraction, happens the first time you open a
+tab. After that the icons live in that tab's own cache, so coming back is instant.
+
+<img src="docs/tabs.png" width="700" alt="tabs">
 
 ### More than one hub
 
@@ -128,7 +152,9 @@ so do `01 -`, `01.`, `01_` and `01)`.
 | `Enter` | launch the selected card |
 | `Esc` | clear the search; if already empty, dismiss |
 | `F5` | reload and re-read the icons |
-| `Ctrl+O` | switch folder |
+| `Ctrl+Tab` / `Ctrl+Shift+Tab` | next / previous tab |
+| `Ctrl+1` … `Ctrl+9` | jump straight to a tab |
+| `Ctrl+O` | change the active tab's folder |
 | right-click a card | run as administrator / show in folder |
 | right-click the header | resident mode, start with Windows, open the config |
 | double-click the header | open the folder in Explorer |
@@ -139,7 +165,10 @@ so do `01 -`, `01.`, `01_` and `01)`.
 
 ```jsonc
 {
-  "folderPath": "D:\\Games",   // default hub folder
+  "tabs": [                    // one folder per tab
+    { "path": "D:\\Games", "name": "Games" },
+    { "path": "D:\\Work" }
+  ],
   "background": true,          // stay in the tray listening for the hotkey
   "hotKey": "Ctrl+Alt+Space",  // e.g. "Alt+Q", "Win+Shift+H"
   "closeAfterLaunch": true,    // dismiss after opening an app
@@ -148,6 +177,10 @@ so do `01 -`, `01.`, `01_` and `01)`.
   "maxColumns": 7
 }
 ```
+
+An older `"folderPath"` is migrated to a single tab on first run.
+Whatever the app swallows quietly is recorded in
+`%APPDATA%\FolderHub\folderhub.log`.
 
 ## Design
 
@@ -183,6 +216,7 @@ WPF on .NET 10, no external dependencies.
 src/FolderHub/
   App.xaml.cs               startup, arguments, single instance
   MainWindow.xaml(.cs)      layout, cards, adaptive grid, search, drag & drop
+  MainWindow.Tabs.cs        tabs and their lazy loading
   MainWindow.Background.cs  tray, global hotkey, show/hide
   Themes/Dark.xaml          palette and styles
   Services/
@@ -195,6 +229,7 @@ src/FolderHub/
     TrayIcon.cs             Shell_NotifyIcon
     SingleInstance.cs       mutex + message to the running instance
     WindowEffects.cs        acrylic, rounded corners, dark mode
+    Log.cs                  file log, so swallowed failures leave a trace
   Interop/Native.cs         DWM, Shell, GDI, user32
 tests/FolderHub.Tests/      xUnit
 tools/                      icon generator, shortcut helper
@@ -227,9 +262,9 @@ A few decisions worth calling out:
 dotnet test
 ```
 
-28 tests over the pure logic: what the scanner picks up, the four sort modes (including
+40 tests over the pure logic: what the scanner picks up, the four sort modes (including
 natural ordering, so `Item2` comes before `Item10`), the manual-order renaming with its
-collision case, and the hotkey parser.
+collision case, the hotkey parser, and the config migration from single folder to tabs.
 
 ## Why not a Windows service?
 

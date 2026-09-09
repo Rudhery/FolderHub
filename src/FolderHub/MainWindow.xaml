@@ -131,6 +131,54 @@
             </Setter>
         </Style>
 
+        <!--  ============ ABA ============  -->
+        <Style x:Key="TabItem" TargetType="ListBoxItem">
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <EventSetter Event="MouseRightButtonUp" Handler="TabItem_MouseRightButtonUp" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Pill"
+                                Height="30"
+                                Padding="13,0"
+                                Background="{StaticResource CardBg}"
+                                BorderBrush="{StaticResource CardBorder}"
+                                BorderThickness="1"
+                                CornerRadius="9">
+                            <TextBlock x:Name="Label"
+                                       VerticalAlignment="Center"
+                                       FontSize="12.5"
+                                       FontWeight="Medium"
+                                       Foreground="{StaticResource TextLabel}"
+                                       Text="{Binding Name}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Pill" Property="Background" Value="{StaticResource CardBgHover}" />
+                                <Setter TargetName="Pill" Property="BorderBrush" Value="{StaticResource CardBorderHover}" />
+                                <Setter TargetName="Label" Property="Foreground" Value="{StaticResource TextPrimary}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Pill" Property="Background" Value="{StaticResource CardBgSelected}" />
+                                <Setter TargetName="Pill" Property="BorderBrush" Value="{StaticResource CardBorderSelected}" />
+                                <Setter TargetName="Label" Property="Foreground" Value="{StaticResource TextStrong}" />
+                                <Setter TargetName="Label" Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <ContextMenu x:Key="TabMenu" Style="{StaticResource DarkContextMenu}">
+            <MenuItem Style="{StaticResource DarkMenuItem}" Click="RevealTab_Click" Header="Abrir esta pasta" />
+            <MenuItem Style="{StaticResource DarkMenuItem}"
+                      Click="RemoveTab_Click"
+                      Header="Remover esta aba"
+                      Tag="remove" />
+        </ContextMenu>
+
         <!--  bandeja: clique direito no ícone  -->
         <ContextMenu x:Key="TrayMenu" Style="{StaticResource DarkContextMenu}">
             <MenuItem Style="{StaticResource DarkMenuItem}" Click="TrayOpen_Click" Header="Abrir o hub" />
@@ -154,6 +202,7 @@
                       Header="Iniciar com o Windows"
                       Tag="startup" />
             <Separator Style="{StaticResource DarkSeparator}" />
+            <MenuItem Style="{StaticResource DarkMenuItem}" Click="AddTab_Click" Header="Adicionar uma aba…" />
             <MenuItem Style="{StaticResource DarkMenuItem}" Click="OpenFolder_Click" Header="Abrir a pasta do hub" />
             <MenuItem Style="{StaticResource DarkMenuItem}" Click="OpenConfig_Click" Header="Abrir a configuração" />
         </ContextMenu>
@@ -339,6 +388,7 @@
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
@@ -456,9 +506,31 @@
                 </StackPanel>
             </Grid>
 
+            <!--
+                ============ ABAS ============
+                Fica escondida com uma pasta só, então o layout de sempre não muda.
+            -->
+            <ListBox x:Name="TabStrip"
+                     Grid.Row="1"
+                     Margin="0,18,0,0"
+                     HorizontalAlignment="Left"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     Focusable="False"
+                     ItemContainerStyle="{StaticResource TabItem}"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     SelectionChanged="TabStrip_SelectionChanged"
+                     Visibility="Collapsed">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+            </ListBox>
+
             <!--  ============ GRID DE CARDS ============  -->
             <ListBox x:Name="Cards"
-                     Grid.Row="1"
+                     Grid.Row="2"
                      Margin="-5,21,-5,-5"
                      AllowDrop="True"
                      HorizontalAlignment="Center"
@@ -486,7 +558,7 @@
 
             <!--  ============ ESTADO VAZIO ============  -->
             <StackPanel x:Name="EmptyState"
-                        Grid.Row="1"
+                        Grid.Row="2"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Visibility="Collapsed">
@@ -528,7 +600,7 @@
             </StackPanel>
 
             <!--  ============ RODAPÉ ============  -->
-            <Grid Grid.Row="2" Margin="0,22,0,0">
+            <Grid Grid.Row="3" Margin="0,22,0,0">
                 <Border Height="1" VerticalAlignment="Top" Background="{StaticResource Divider}" />
                 <Grid Margin="0,16,0,0">
                     <TextBlock x:Name="CountText"
@@ -548,7 +620,7 @@
             <!--  arrastar e soltar  -->
             <Border x:Name="DropOverlay"
                     Grid.Row="0"
-                    Grid.RowSpan="3"
+                    Grid.RowSpan="4"
                     Margin="-30,-30,-30,-24"
                     Background="#E61A1C20"
                     CornerRadius="8"

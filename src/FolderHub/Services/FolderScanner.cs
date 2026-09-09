@@ -26,6 +26,31 @@ public static partial class FolderScanner
         return stripped.Length == 0 ? fileNameWithoutExtension : stripped;
     }
 
+    /// <summary>
+    /// Contagem barata: olha só a extensão dos nomes, sem abrir arquivo nenhum.
+    /// É o que permite dimensionar a janela para a maior aba sem pagar o custo
+    /// de carregar todas elas na abertura.
+    /// </summary>
+    public static int CountSupported(string folder)
+    {
+        if (string.IsNullOrWhiteSpace(folder)) return 0;
+
+        try
+        {
+            int count = 0;
+            foreach (string file in Directory.EnumerateFiles(folder, "*", SearchOption.TopDirectoryOnly))
+            {
+                if (Supported.Contains(Path.GetExtension(file))) count++;
+            }
+            return count;
+        }
+        catch (Exception error)
+        {
+            Log.Warn($"não consegui contar os atalhos de {folder}", error);
+            return 0;
+        }
+    }
+
     public static List<AppItem> Scan(string folder)
     {
         var items = new List<AppItem>();
@@ -36,8 +61,9 @@ public static partial class FolderScanner
         {
             files = Directory.EnumerateFiles(folder, "*", SearchOption.TopDirectoryOnly);
         }
-        catch
+        catch (Exception error)
         {
+            Log.Warn($"não consegui ler a pasta {folder}", error);
             return items;
         }
 

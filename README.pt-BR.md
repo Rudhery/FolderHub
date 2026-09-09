@@ -42,6 +42,7 @@ que aparece no Explorer, e vice-versa.
 - **Digite para filtrar**, setas para navegar, `Enter` para abrir.
 - **Arraste para reordenar**, e a ordem é gravada na própria pasta.
 - **Arrastar e soltar** — solte uma pasta para trocar de hub, solte programas para adicionar.
+- **Abas** — várias pastas num hub só, cada uma carregada só quando você abre.
 - **Vários hubs** — um atalho por pasta, cada um fixável na barra de tarefas.
 - **Ao vivo** — adicionou ou removeu um atalho com o hub aberto, ele se atualiza sozinho.
 
@@ -71,6 +72,31 @@ O instalador cria um atalho no menu Iniciar — clique com o botão direito nele
 **Fixar na barra de tarefas**. Fixar um `.exe` puro é instável no Windows 11, e um `.exe`
 fixado sempre abre sem argumentos, que é justamente o que atrapalha quando você tem mais
 de um hub.
+
+### Abas
+
+Um hub não é uma pasta só. Liste as pastas na config e cada uma vira uma aba:
+
+```jsonc
+"tabs": [
+  { "path": "D:\\Trabalho", "name": "Trabalho" },
+  { "path": "D:\\Jogos",    "name": "Jogos" },
+  { "path": "D:\\Ferramentas" }         // sem nome = o nome da pasta
+]
+```
+
+Solte uma pasta na janela para somar uma, clique com o direito numa aba para
+remover. Com uma aba só a faixa fica escondida, então um hub de pasta única
+continua exatamente como era.
+
+**O carregamento é preguiçoso onde realmente custa.** Na abertura cada aba faz
+uma contagem barata — só lê a extensão dos nomes, nenhum arquivo é aberto — e é
+ela que dimensiona a janela para a maior aba, para a janela nunca mudar de
+tamanho quando você troca. A listagem de verdade, e principalmente a extração dos
+ícones, acontece na primeira vez que você abre a aba. Depois os ícones ficam no
+cache da própria aba, então voltar é instantâneo.
+
+<img src="docs/tabs.png" width="700" alt="tabs">
 
 ### Mais de um hub
 
@@ -129,7 +155,9 @@ funcionando, e ele aceita `01 -`, `01.`, `01_` e `01)`.
 | `Enter` | abre o card selecionado |
 | `Esc` | limpa a busca; se já estiver vazia, fecha |
 | `F5` | recarrega e relê os ícones |
-| `Ctrl+O` | troca a pasta |
+| `Ctrl+Tab` / `Ctrl+Shift+Tab` | próxima / aba anterior |
+| `Ctrl+1` … `Ctrl+9` | vai direto para uma aba |
+| `Ctrl+O` | troca a pasta da aba ativa |
 | botão direito num card | executar como administrador / mostrar na pasta |
 | botão direito no cabeçalho | modo residente, iniciar com o Windows, abrir a config |
 | duplo clique no cabeçalho | abre a pasta no Explorer |
@@ -140,7 +168,10 @@ funcionando, e ele aceita `01 -`, `01.`, `01_` e `01)`.
 
 ```jsonc
 {
-  "folderPath": "D:\\Jogos",   // pasta padrão do hub
+  "tabs": [                    // uma pasta por aba
+    { "path": "D:\\Jogos", "name": "Jogos" },
+    { "path": "D:\\Trabalho" }
+  ],
   "background": true,          // fica na bandeja ouvindo o atalho
   "hotKey": "Ctrl+Alt+Space",  // ex.: "Alt+Q", "Win+Shift+H"
   "closeAfterLaunch": true,    // some depois de abrir um app
@@ -149,6 +180,10 @@ funcionando, e ele aceita `01 -`, `01.`, `01_` e `01)`.
   "maxColumns": 7
 }
 ```
+
+Um `"folderPath"` antigo é migrado para uma aba única na primeira abertura.
+O que o app engole em silêncio fica registrado em
+`%APPDATA%\FolderHub\folderhub.log`.
 
 ## Design
 
@@ -185,6 +220,7 @@ WPF em .NET 10, sem dependências externas.
 src/FolderHub/
   App.xaml.cs               inicialização, argumentos, instância única
   MainWindow.xaml(.cs)      layout, cards, grade adaptativa, busca, drag & drop
+  MainWindow.Tabs.cs        as abas e o carregamento preguiçoso
   MainWindow.Background.cs  bandeja, atalho global, mostrar/esconder
   Themes/Dark.xaml          paleta e estilos
   Services/
@@ -197,6 +233,7 @@ src/FolderHub/
     TrayIcon.cs             Shell_NotifyIcon
     SingleInstance.cs       mutex + mensagem para a instância que já roda
     WindowEffects.cs        acrílico, cantos arredondados, modo escuro
+    Log.cs                  log em arquivo, para falha engolida deixar rastro
   Interop/Native.cs         DWM, Shell, GDI, user32
 tests/FolderHub.Tests/      xUnit
 tools/                      gerador de ícone, script de atalho
@@ -229,9 +266,10 @@ Decisões que valem citar:
 dotnet test
 ```
 
-28 testes sobre a lógica pura: o que o scanner recolhe, os quatro modos de ordenação
+40 testes sobre a lógica pura: o que o scanner recolhe, os quatro modos de ordenação
 (incluindo ordenação natural, para `Item2` vir antes de `Item10`), o renomeio da ordem
-manual com o caso de colisão, e o parser do atalho.
+manual com o caso de colisão, o parser do atalho, e a migração da config de pasta única
+para abas.
 
 ## Por que não um serviço do Windows?
 

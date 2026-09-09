@@ -4,9 +4,26 @@ using System.Text.Json.Serialization;
 
 namespace FolderHub.Services;
 
+/// <summary>Uma aba na configuração: uma pasta, com rótulo opcional.</summary>
+public sealed class TabConfig
+{
+    public string Path { get; set; } = string.Empty;
+
+    /// <summary>Rótulo da aba. Vazio = nome da pasta.</summary>
+    public string? Name { get; set; }
+}
+
 public sealed class HubConfig
 {
-    /// <summary>Pasta que vira o hub. É a única "configuração" que importa.</summary>
+    /// <summary>
+    /// As pastas do hub, uma por aba. É a configuração que importa.
+    /// </summary>
+    public List<TabConfig> Tabs { get; set; } = [];
+
+    /// <summary>
+    /// Config antiga, de pasta única. Fica só para migrar quem já tinha o app;
+    /// o <see cref="Migrate"/> move o valor para <see cref="Tabs"/> e zera aqui.
+    /// </summary>
     public string? FolderPath { get; set; }
 
     /// <summary>Fecha o hub depois de abrir um app (comportamento de launcher).</summary>
@@ -52,15 +69,44 @@ public sealed class HubConfig
             if (File.Exists(FilePath))
             {
                 var cfg = JsonSerializer.Deserialize<HubConfig>(File.ReadAllText(FilePath), Options);
-                if (cfg != null) return cfg;
+                if (cfg != null)
+                {
+                    // Grava na hora: senão o formato antigo fica no arquivo para
+                    // sempre e a migração roda de novo a cada abertura.
+                    if (cfg.Migrate()) cfg.Save();
+                    return cfg;
+                }
             }
         }
-        catch
+        catch (Exception error)
         {
             // config corrompida: recomeça do zero em vez de travar o app
+            Log.Warn($"config ilegível em {FilePath}, usando os padrões", error);
         }
 
         return new HubConfig();
+    }
+
+    /// <summary>
+    /// Traz a config antiga de pasta única para o formato de abas.
+    /// Devolve true se mudou alguma coisa e vale a pena regravar.
+    /// </summary>
+    public bool Migrate()
+    {
+        Tabs ??= [];
+
+        bool changed = false;
+
+        if (!string.IsNullOrWhiteSpace(FolderPath))
+        {
+            if (Tabs.Count == 0) Tabs.Add(new TabConfig { Path = FolderPath });
+            FolderPath = null;
+            changed = true;
+        }
+
+        changed |= Tabs.RemoveAll(t => string.IsNullOrWhiteSpace(t.Path)) > 0;
+
+        return changed;
     }
 
     public void Save()
@@ -70,9 +116,10 @@ public sealed class HubConfig
             System.IO.Directory.CreateDirectory(Directory);
             File.WriteAllText(FilePath, JsonSerializer.Serialize(this, Options));
         }
-        catch
+        catch (Exception error)
         {
             // salvar config nunca deve derrubar o hub
+            Log.Warn("não consegui salvar a configuração", error);
         }
     }
 }

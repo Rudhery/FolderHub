@@ -114,10 +114,11 @@ public partial class MainWindow
 
     private void ShowHub(string? folder)
     {
+        // A pasta pedida por outro lançamento vira aba (ou ativa a que já existe).
         if (!string.IsNullOrWhiteSpace(folder) &&
             !string.Equals(folder, _folder, StringComparison.OrdinalIgnoreCase))
         {
-            SetFolder(folder, persist: false);
+            AddTab(folder);
         }
 
         _closing = false;
