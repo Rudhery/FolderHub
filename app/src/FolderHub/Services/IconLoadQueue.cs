@@ -23,31 +23,44 @@ public static class IconLoadQueue
     {
         if (items.Count == 0) return;
 
-        Log.Info($"extraindo {items.Count} ícone(s) de {label}");
+        // Uma thread por bloco. Extrair ícone é I/O de shell, então numa pasta
+        // grande o gargalo era esperar um arquivo de cada vez.
+        int workers = Math.Clamp(Environment.ProcessorCount / 2, 1, 4);
+        if (items.Count < 24) workers = 1;
 
-        var thread = new Thread(() =>
+        Log.Info($"extraindo {items.Count} ícone(s) de {label} em {workers} thread(s)");
+
+        for (int worker = 0; worker < workers; worker++)
         {
-            foreach (var item in items)
+            int offset = worker;
+            int step = workers;
+
+            var thread = new Thread(() =>
             {
-                if (token.IsCancellationRequested) return;
-
-                var icon = IconLoader.Load(item.Path);
-                if (icon is null)
+                for (int i = offset; i < items.Count; i += step)
                 {
-                    Log.Warn($"sem ícone para {item.Path}");
-                    continue;
+                    if (token.IsCancellationRequested) return;
+
+                    var item = items[i];
+                    var icon = IconLoader.Load(item.Path);
+
+                    if (icon is null)
+                    {
+                        Log.Warn($"sem ícone para {item.Path}");
+                        continue;
+                    }
+
+                    onLoaded(item, icon);
                 }
+            })
+            {
+                IsBackground = true,
+                Priority = ThreadPriority.BelowNormal,
+                Name = $"FolderHub.Icons.{worker}"
+            };
 
-                onLoaded(item, icon);
-            }
-        })
-        {
-            IsBackground = true,
-            Priority = ThreadPriority.BelowNormal,
-            Name = "FolderHub.Icons"
-        };
-
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.Start();
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+        }
     }
 }

@@ -191,6 +191,40 @@ An older `"folderPath"` is migrated to a single tab on first run.
 Whatever the app swallows quietly is recorded in
 `%APPDATA%\FolderHub\folderhub.log`.
 
+## Performance
+
+Measured on a folder of copies of real shortcuts, so every card is a distinct
+icon extraction — the worst case.
+
+| Shortcuts | Window up | Icons settled | Working set | Private |
+|---|---|---|---|---|
+| 13 | 0.59 s | 3.9 s | 192 MB | 126 MB |
+| 100 | 0.62 s | — | 254 MB | 182 MB |
+| 300 | 0.81 s | 5.5 s | 224 MB | 161 MB |
+| 800 | 1.51 s | 5.5 s | 297 MB | 229 MB |
+
+What matters for a launcher, though, is the resident case:
+
+| | |
+|---|---|
+| hotkey pressed → window on screen | **61–73 ms** |
+| idle in the tray, over 6 s | **0 ms of CPU** |
+| idle in the tray | **29 MB** working set |
+| handles | ~600, flat regardless of folder size |
+
+Two things got it there. Icons are cached at 96px rather than 256px — the card
+draws them at 28px, so 256 meant keeping 256 KB per shortcut to throw 95% of the
+pixels away, which alone was 200 MB in a folder of 800. And extraction is split
+across a few STA threads instead of one.
+
+What is still missing is virtualization: every card is materialised, so past a
+few hundred shortcuts the containers themselves start to cost. WPF's virtualizing
+panel does not wrap, so this means a custom panel — and the current selection,
+drag-to-reorder and entry animation all assume real containers. It buys nothing
+at the sizes a launcher is actually used at, so it has not been done.
+
+---
+
 ## Theming
 
 `themeFile` points at a `ResourceDictionary` loaded after the built-in theme, so

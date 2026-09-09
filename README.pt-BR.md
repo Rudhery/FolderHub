@@ -194,6 +194,41 @@ Um `"folderPath"` antigo é migrado para uma aba única na primeira abertura.
 O que o app engole em silêncio fica registrado em
 `%APPDATA%\FolderHub\folderhub.log`.
 
+## Desempenho
+
+Medido numa pasta de cópias de atalhos reais, então cada card é uma extração de
+ícone distinta — o pior caso.
+
+| Atalhos | Janela abre | Ícones prontos | Working set | Privado |
+|---|---|---|---|---|
+| 13 | 0,59 s | 3,9 s | 192 MB | 126 MB |
+| 100 | 0,62 s | — | 254 MB | 182 MB |
+| 300 | 0,81 s | 5,5 s | 224 MB | 161 MB |
+| 800 | 1,51 s | 5,5 s | 297 MB | 229 MB |
+
+Mas o que importa num launcher é o estado residente:
+
+| | |
+|---|---|
+| atalho apertado → janela na tela | **61–73 ms** |
+| parado na bandeja, por 6 s | **0 ms de CPU** |
+| parado na bandeja | **29 MB** de working set |
+| handles | ~600, estável independente do tamanho da pasta |
+
+Duas coisas levaram a isso. O ícone é guardado em 96px e não em 256px — o card
+desenha em 28px, então 256 significava manter 256 KB por atalho para jogar 95%
+dos pixels fora, o que sozinho dava 200 MB numa pasta de 800. E a extração é
+dividida entre algumas threads STA em vez de uma.
+
+O que ainda falta é virtualização: todo card é materializado, então passando de
+algumas centenas de atalhos os próprios containers começam a pesar. O painel
+virtualizado do WPF não quebra linha, então isso exigiria um painel próprio — e
+a seleção, o arrastar-para-reordenar e a animação de entrada assumem containers
+de verdade. Não compra nada no tamanho em que um launcher é realmente usado,
+então não foi feito.
+
+---
+
 ## Temas
 
 `themeFile` aponta para um `ResourceDictionary` carregado depois do tema embutido,

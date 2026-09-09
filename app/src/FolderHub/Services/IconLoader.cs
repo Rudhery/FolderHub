@@ -15,7 +15,12 @@ namespace FolderHub.Services;
 /// </summary>
 public static class IconLoader
 {
-    private const int Size = 256;
+    /// <summary>
+    /// O card desenha o ícone em 28px lógicos — 56px a 200% de DPI. Guardar 256
+    /// gastava 256 KB por atalho (200 MB numa pasta de 800) para jogar 95% dos
+    /// pixels fora na hora de desenhar. 96 dá folga até 300% de DPI por 36 KB.
+    /// </summary>
+    private const int Size = 96;
 
     public static ImageSource? Load(string path)
     {
@@ -150,7 +155,7 @@ public static class IconLoader
             if (direct != null) return direct;
         }
 
-        foreach (int wanted in (int[])[256, 128, 64, 48, 32])
+        foreach (int wanted in (int[])[Size, 64, 48, 32])
         {
             var handles = new nint[1];
             var ids = new int[1];
