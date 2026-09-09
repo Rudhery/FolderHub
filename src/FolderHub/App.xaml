@@ -1,0 +1,18 @@
+<Application x:Class="FolderHub.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:svc="clr-namespace:FolderHub.Services"
+             ShutdownMode="OnMainWindowClose">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Dark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <svc:NullToVisibilityConverter x:Key="NullToVis" />
+            <svc:NullToVisibilityConverter x:Key="NullToVisInverted" Invert="True" />
+            <svc:BoolToVisibilityConverter x:Key="BoolToVis" />
+            <svc:BoolToVisibilityConverter x:Key="BoolToVisInverted" Invert="True" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

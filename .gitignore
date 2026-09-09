@@ -1,0 +1,13 @@
+# build
+bin/
+obj/
+dist/
+
+# ide
+.vs/
+.idea/
+*.user
+*.suo
+
+# runtime
+*.fhtmp
