@@ -69,29 +69,56 @@ public sealed class HubConfig
         AllowTrailingCommas = true
     };
 
+    /// <summary>
+    /// Disparado depois de gravar. É como uma tela de configuração avisa o hub
+    /// sem precisar conhecê-lo — e sem exigir reiniciar o app para valer.
+    /// </summary>
+    public static event Action? Changed;
+
     public static HubConfig Load()
     {
-        try
+        if (TryLoad(out var config, out var error))
         {
-            if (File.Exists(FilePath))
-            {
-                var cfg = JsonSerializer.Deserialize<HubConfig>(File.ReadAllText(FilePath), Options);
-                if (cfg != null)
-                {
-                    // Grava na hora: senão o formato antigo fica no arquivo para
-                    // sempre e a migração roda de novo a cada abertura.
-                    if (cfg.Migrate()) cfg.Save();
-                    return cfg;
-                }
-            }
-        }
-        catch (Exception error)
-        {
-            // config corrompida: recomeça do zero em vez de travar o app
-            Log.Warn($"config ilegível em {FilePath}, usando os padrões", error);
+            // Grava na hora: senão o formato antigo fica no arquivo para sempre
+            // e a migração roda de novo a cada abertura.
+            if (config.Migrate()) config.Save();
+            return config;
         }
 
+        if (error is not null) Log.Warn($"config ilegível em {FilePath}, usando os padrões", error);
+
         return new HubConfig();
+    }
+
+    /// <summary>
+    /// Lê a config dizendo se conseguiu. Existe separado do <see cref="Load"/>
+    /// por causa do vigia de arquivo: ler no meio de uma gravação falha o parse,
+    /// e trocar a config por padrões nesse instante apagaria as abas de quem
+    /// estiver usando. Quem observa o disco precisa poder simplesmente desistir.
+    /// </summary>
+    public static bool TryLoad(out HubConfig config, out Exception? error)
+    {
+        config = new HubConfig();
+        error = null;
+
+        try
+        {
+            if (!File.Exists(FilePath)) return false;
+
+            string text = File.ReadAllText(FilePath);
+            if (string.IsNullOrWhiteSpace(text)) return false;
+
+            var parsed = JsonSerializer.Deserialize<HubConfig>(text, Options);
+            if (parsed is null) return false;
+
+            config = parsed;
+            return true;
+        }
+        catch (Exception failure)
+        {
+            error = failure;
+            return false;
+        }
     }
 
     /// <summary>
@@ -116,12 +143,19 @@ public sealed class HubConfig
         return changed;
     }
 
+    /// <summary>O JSON como ele seria gravado. Serve para comparar duas configs.</summary>
+    public string ToJson() => JsonSerializer.Serialize(this, Options);
+
+    /// <summary>Avisa quem observa. Usado quando a config muda fora do Save (arquivo editado à mão).</summary>
+    public static void NotifyChanged() => Changed?.Invoke();
+
     public void Save()
     {
         try
         {
             System.IO.Directory.CreateDirectory(Directory);
             File.WriteAllText(FilePath, JsonSerializer.Serialize(this, Options));
+            Changed?.Invoke();
         }
         catch (Exception error)
         {

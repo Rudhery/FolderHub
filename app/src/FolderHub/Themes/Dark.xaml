@@ -173,6 +173,76 @@
         </Setter>
     </Style>
 
+    <!--
+        ============ MENUS ============
+        Ficavam dentro do MainWindow, onde nenhuma outra janela alcançava.
+    -->
+    <!--  ============ MENU DE CONTEXTO ============  -->
+    <Style x:Key="DarkMenuItem" TargetType="MenuItem">
+        <Setter Property="Foreground" Value="{StaticResource TextLabel}" />
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="Height" Value="30" />
+        <Setter Property="Template">
+        <Setter.Value>
+            <ControlTemplate TargetType="MenuItem">
+                <Border x:Name="B" Padding="10,0" Background="Transparent" CornerRadius="7">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="19" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               VerticalAlignment="Center"
+                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                               FontSize="10"
+                               Foreground="{StaticResource TextPrimary}"
+                               Text="&#xE73E;"
+                               Visibility="{Binding IsChecked, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BoolToVis}}" />
+                    <ContentPresenter Grid.Column="1" VerticalAlignment="Center" ContentSource="Header" />
+                </Grid>
+                </Border>
+                <ControlTemplate.Triggers>
+                <Trigger Property="IsHighlighted" Value="True">
+                    <Setter TargetName="B" Property="Background" Value="{StaticResource CardBgHover}" />
+                    <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+                </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+        </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="DarkSeparator" TargetType="Separator">
+        <Setter Property="Margin" Value="9,5" />
+        <Setter Property="Template">
+        <Setter.Value>
+            <ControlTemplate TargetType="Separator">
+                <Border Height="1" Background="{StaticResource Divider}" />
+            </ControlTemplate>
+        </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="DarkContextMenu" TargetType="ContextMenu">
+        <Setter Property="Template">
+        <Setter.Value>
+            <ControlTemplate TargetType="ContextMenu">
+                <Border Padding="5"
+                        Background="#F51A1C20"
+                        BorderBrush="{StaticResource SurfaceBorder}"
+                        BorderThickness="1"
+                        CornerRadius="12">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="32" Opacity="0.7" ShadowDepth="6" Color="Black" />
+                </Border.Effect>
+                <StackPanel IsItemsHost="True" />
+                </Border>
+            </ControlTemplate>
+        </Setter.Value>
+        </Setter>
+    </Style>
+
+
     <!-- ============ BUSCA ============ -->
     <Style x:Key="SearchBox" TargetType="TextBox">
         <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />

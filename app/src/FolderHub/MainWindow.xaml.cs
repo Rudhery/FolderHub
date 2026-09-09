@@ -8,10 +8,11 @@ using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using FolderHub.Models;
 using FolderHub.Services;
+using FolderHub.Views;
 
 namespace FolderHub;
 
-public partial class MainWindow : Window
+public partial class MainWindow : HubWindow
 {
     // Card + 5px de margem de cada lado = 10px de gap, como no design. Vem do
     // tema para que um arquivo de tema possa mudar o tamanho dos cards.
@@ -42,7 +43,6 @@ public partial class MainWindow : Window
     private string _folder = string.Empty;
     private int _columns = 4;
     private bool _suppressBlurClose;
-    private bool _closing;
 
     private bool _animateIntro;
 
@@ -73,14 +73,14 @@ public partial class MainWindow : Window
 
         BuildTabs(tabs);
         ActivateTab(tabs[0], resize: true, animate: true);
+        WatchConfig();
     }
 
     // ----------------------------------------------------------- ciclo de vida
 
     protected override void OnSourceInitialized(EventArgs e)
     {
-        base.OnSourceInitialized(e);
-        WindowEffects.ApplyAcrylic(this);
+        base.OnSourceInitialized(e);   // a casca aplica o acrílico
         SetUpBackgroundMode();
     }
 
@@ -104,6 +104,7 @@ public partial class MainWindow : Window
         _iconCts.Cancel();
         _watcher?.Dispose();
         _reloadDebounce.Stop();
+        StopWatchingConfig();
         TearDownBackgroundMode();
         base.OnClosed(e);
     }
@@ -123,7 +124,7 @@ public partial class MainWindow : Window
     protected override void OnDeactivated(EventArgs e)
     {
         base.OnDeactivated(e);
-        if (App.Config.CloseOnBlur && !_suppressBlurClose && !_closing) Dismiss();
+        if (App.Config.CloseOnBlur && !_suppressBlurClose && !Dismissing) Dismiss();
     }
 
     // ----------------------------------------------------------- carregamento
@@ -272,7 +273,15 @@ public partial class MainWindow : Window
         double roomForCards = Math.Max(CardOuterHeight, work.Height * 0.84 - ApproxChromeHeight);
         Cards.Height = Math.Min(rows * CardOuterHeight, roomForCards);
 
-        Width = Math.Min(Math.Max(MinShellWidth, cols * CardOuterWidth + 52), work.Width - 40);
+        // Com SizeToContent ligado, o WPF recalcula o tamanho no próximo layout e
+        // descarta a largura pedida — só a primeira, aplicada antes de a janela
+        // aparecer, pegava. Desligar durante a atribuição faz a mudança valer.
+        double wanted = Math.Min(Math.Max(MinShellWidth, cols * CardOuterWidth + 52), work.Width - 40);
+
+        var sizing = SizeToContent;
+        SizeToContent = SizeToContent.Manual;
+        Width = wanted;
+        SizeToContent = sizing;
 
         if (IsLoaded) ClampIntoWorkArea(work);
     }
@@ -287,17 +296,7 @@ public partial class MainWindow : Window
 
     // ----------------------------------------------------------- animações
 
-    private void AnimateShellIn()
-    {
-        Shell.BeginAnimation(OpacityProperty,
-            new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(160)));
-
-        ShellLift.BeginAnimation(TranslateTransform.YProperty,
-            new DoubleAnimation(8, 0, TimeSpan.FromMilliseconds(240))
-            {
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            });
-    }
+    private void AnimateShellIn() => FadeIn();
 
     /// <summary>Entrada escalonada dos cards — dispara no Loaded de cada container.</summary>
     private void Card_Loaded(object sender, RoutedEventArgs e)
@@ -321,18 +320,20 @@ public partial class MainWindow : Window
             new DoubleAnimation(10, 0, TimeSpan.FromMilliseconds(280)) { BeginTime = delay, EasingFunction = ease });
     }
 
-    /// <summary>Some da tela: fecha de vez, ou só esconde se estiver residente.</summary>
-    private void Dismiss()
+    /// <summary>Residente o hub só esconde; fora dele, o padrão da casca vale.</summary>
+    protected override void Dismiss()
     {
-        if (_closing) return;
-        _closing = true;
+        if (!App.Background)
+        {
+            base.Dismiss();
+            return;
+        }
+
+        if (Dismissing) return;
+        Dismissing = true;
 
         var fade = new DoubleAnimation(Shell.Opacity, 0, TimeSpan.FromMilliseconds(100));
-        fade.Completed += (_, _) =>
-        {
-            if (App.Background) HideHub();
-            else Close();
-        };
+        fade.Completed += (_, _) => HideHub();
         Shell.BeginAnimation(OpacityProperty, fade);
     }
 
@@ -475,8 +476,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        try { DragMove(); }
-        catch { /* já solto */ }
+        DragFrom(e);
     }
 
     private void ChangeFolder()

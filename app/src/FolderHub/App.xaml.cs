@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using System.Windows.Threading;
 using FolderHub.Models;
 using FolderHub.Services;
 
@@ -14,6 +15,9 @@ public partial class App : Application
 
     /// <summary>Nasce escondido (é assim que a entrada de inicialização chama).</summary>
     public static bool StartHidden { get; private set; }
+
+    private static FileSystemWatcher? _configWatcher;
+    private static DispatcherTimer? _configSettle;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -102,13 +106,79 @@ public partial class App : Application
             Config.Save();
         }
 
+        WatchConfigFile();
+
         var window = new MainWindow(tabs);
         MainWindow = window;
         window.Show();
     }
 
+    /// <summary>
+    /// A config também é observada em disco: o próprio app oferece "abrir a
+    /// configuração" para edição à mão, e sem isso essas mudanças só valeriam na
+    /// próxima abertura. Mesmo espírito de vigiar a pasta dos atalhos.
+    /// </summary>
+    private static void WatchConfigFile()
+    {
+        try
+        {
+            Directory.CreateDirectory(HubConfig.Directory);
+
+            _configWatcher = new FileSystemWatcher(HubConfig.Directory, "config.json")
+            {
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
+                EnableRaisingEvents = true
+            };
+
+            // Uma gravação dispara vários eventos, e ler no meio dela falha o
+            // parse. O timer junta a rajada e lê depois que o arquivo assentou.
+            _configSettle = new DispatcherTimer(DispatcherPriority.Background)
+            {
+                Interval = TimeSpan.FromMilliseconds(250)
+            };
+            _configSettle.Tick += (_, _) =>
+            {
+                _configSettle!.Stop();
+                ReloadConfigFromDisk();
+            };
+
+            _configWatcher.Changed += (_, _) => Current?.Dispatcher.BeginInvoke(() =>
+            {
+                _configSettle!.Stop();
+                _configSettle.Start();
+            });
+        }
+        catch (Exception error)
+        {
+            Log.Warn("não consegui observar o arquivo de configuração", error);
+        }
+    }
+
+    private static void ReloadConfigFromDisk()
+    {
+        // Não conseguiu ler? Desiste. Trocar a config por padrões aqui apagaria
+        // as abas de quem está com o hub aberto.
+        if (!HubConfig.TryLoad(out var fresh, out var error))
+        {
+            if (error is not null) Log.Warn("config no disco ilegível, mantendo a que está em uso", error);
+            return;
+        }
+
+        fresh.Migrate();
+
+        // Gravar dispara o vigia de volta; comparando, a própria gravação do app
+        // não vira um segundo evento.
+        if (fresh.ToJson() == Config.ToJson()) return;
+
+        Config = fresh;
+        HubConfig.NotifyChanged();
+        Log.Info("configuração recarregada do disco");
+    }
+
     protected override void OnExit(ExitEventArgs e)
     {
+        _configSettle?.Stop();
+        _configWatcher?.Dispose();
         if (Background) SingleInstance.ForgetWindow();
         SingleInstance.Release();
         base.OnExit(e);

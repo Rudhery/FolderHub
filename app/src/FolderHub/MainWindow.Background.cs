@@ -49,13 +49,24 @@ public partial class MainWindow
         // antiga. Ela é decidida no construtor, antes do handle existir.
         SingleInstance.PublishWindow(Handle);
 
-        bool ok = _hotKey.Register(Handle, App.Config.HotKey);
-        _tray.Add(Handle, ok
-            ? $"FolderHub — {App.Config.HotKey}"
-            : "FolderHub (atalho global indisponível)");
-
-        if (!ok) _hotKeyFailed = true;
+        RegisterHotKey();
+        _tray.Add(Handle, TrayTooltip());
     }
+
+    /// <summary>Registra (ou re-registra) o atalho global. Trocável em tempo de execução.</summary>
+    private void RegisterHotKey()
+    {
+        if (Handle == nint.Zero) return;
+
+        _hotKeyFailed = !_hotKey.Register(Handle, App.Config.HotKey);
+        _tray.UpdateTooltip(TrayTooltip());
+
+        if (_hotKeyFailed) Log.Warn($"atalho global indisponível: {App.Config.HotKey}");
+    }
+
+    private string TrayTooltip() => _hotKeyFailed
+        ? "FolderHub (atalho global indisponível)"
+        : $"FolderHub — {App.Config.HotKey}";
 
     private void DisableResidentMode()
     {
@@ -108,7 +119,7 @@ public partial class MainWindow
 
     private void ToggleHub()
     {
-        if (IsVisible && !_closing) HideHub();
+        if (IsVisible && !Dismissing) HideHub();
         else ShowHub(null);
     }
 
@@ -121,7 +132,7 @@ public partial class MainWindow
             AddTab(folder);
         }
 
-        _closing = false;
+        Dismissing = false;
         SearchBox.Clear();
 
         CenterOnActiveMonitor();
@@ -142,7 +153,7 @@ public partial class MainWindow
         Shell.BeginAnimation(OpacityProperty, null);
         Shell.Opacity = 0;
         Hide();
-        _closing = false;
+        Dismissing = false;
 
         TrimWorkingSet();
     }
