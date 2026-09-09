@@ -49,7 +49,8 @@
         <!--  bandeja: clique direito no ícone  -->
         <ContextMenu x:Key="TrayMenu" Style="{StaticResource HubContextMenu}">
             <MenuItem Style="{StaticResource HubMenuItem}" Click="TrayOpen_Click" Header="Abrir o hub" />
-            <MenuItem Style="{StaticResource HubMenuItem}" Click="ChangeFolder_Click" Header="Trocar pasta…" />
+            <!--  residente e escondido, a bandeja é o único caminho para a configuração  -->
+            <MenuItem Style="{StaticResource HubMenuItem}" Click="Settings_Click" Header="Configuração…" />
             <MenuItem Style="{StaticResource HubMenuItem}"
                       Click="ToggleStartup_Click"
                       Header="Iniciar com o Windows"
@@ -60,6 +61,8 @@
 
         <!--  clique direito no cabeçalho  -->
         <ContextMenu x:Key="OptionsMenu" Style="{StaticResource HubContextMenu}">
+            <MenuItem Style="{StaticResource HubMenuItem}" Click="Settings_Click" Header="Configuração…" />
+            <Separator Style="{StaticResource HubSeparator}" />
             <MenuItem Style="{StaticResource HubMenuItem}"
                       Click="ToggleResident_Click"
                       Header="Modo residente"
@@ -71,7 +74,7 @@
             <Separator Style="{StaticResource HubSeparator}" />
             <MenuItem Style="{StaticResource HubMenuItem}" Click="AddTab_Click" Header="Adicionar uma aba…" />
             <MenuItem Style="{StaticResource HubMenuItem}" Click="OpenFolder_Click" Header="Abrir a pasta do hub" />
-            <MenuItem Style="{StaticResource HubMenuItem}" Click="OpenConfig_Click" Header="Abrir a configuração" />
+            <MenuItem Style="{StaticResource HubMenuItem}" Click="OpenConfig_Click" Header="Abrir a pasta da configuração" />
         </ContextMenu>
     </Window.Resources>
 

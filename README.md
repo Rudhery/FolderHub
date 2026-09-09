@@ -23,7 +23,7 @@ Drop a shortcut in the folder and it shows up. Press `Ctrl+Alt+Space` and it is 
 ---
 
 **[Install](#install)** · **[Tabs](#tabs)** · **[Ordering](#ordering)** ·
-**[Keyboard](#keyboard)** · **[Configuration](#configuration)** ·
+**[Keyboard](#keyboard)** · **[Settings](#settings)** · **[Configuration](#configuration)** ·
 **[Performance](#performance)** · **[Theming](#theming)** ·
 **[How it works](#how-it-works)** · **[Contributing](CONTRIBUTING.md)**
 
@@ -175,7 +175,29 @@ so do `01 -`, `01.`, `01_` and `01)`.
 | right-click the header | resident mode, start with Windows, open the config |
 | double-click the header | open the folder in Explorer |
 
+## Settings
+
+The gear in the header — or **Configuration…** in the tray menu, which is the way
+in when the hub is resident and hidden.
+
+<p align="center">
+<img src="docs/settings.png" width="760" alt="FolderHub settings">
+</p>
+
+There is no OK button: every change is written and applied at once. Add a hub and
+its tab appears; raise the column limit and the window resizes while you watch.
+The one exception is the theme file, which is read at startup — the screen says so
+where you pick it.
+
+The hotkey field is recorded, not typed: click it and press the combination. It
+refuses one without a modifier because Windows refuses it too, and it tells you
+when a hotkey is set but not working — either because the hub is not resident, so
+nothing is listening, or because another program already owns that combination.
+
 ## Configuration
+
+Everything the settings screen writes lands here, and the file stays hand-editable:
+the app watches it and reloads on change.
 
 `%APPDATA%\FolderHub\config.json`
 
@@ -301,6 +323,9 @@ app/src/FolderHub/
   Themes/
     HubTheme.xaml           every colour, radius, font and measurement
     HubControls.xaml        the templates — no literal values, only tokens
+  Views/
+    HubWindow.cs            the shared shell: chrome, acrylic, Esc, fade
+    SettingsWindow.xaml     the settings screen
   Controls/
     HubCard.cs              the card: variants, and either tile or free content
     HubTabItem.cs           the tab capsule
@@ -311,6 +336,10 @@ app/src/FolderHub/
     HubSpacing.cs           the `gap` WPF lacks, on a 4px scale
     HubMotion.cs            every duration and curve, in one place
     HubGlyph.cs             the icon set, by name instead of codepoint
+    HubToggle.cs            the switch
+    HubOption.cs            one settings row: what it is, and the control for it
+    HubStepper.cs           a number with minus and plus
+    HubHotKeyBox.cs         records a key combination by having you press it
   Services/
     FolderScanner.cs        reads the folder, applies the sort mode
     GridLayout.cs           how many columns and rows, as pure maths

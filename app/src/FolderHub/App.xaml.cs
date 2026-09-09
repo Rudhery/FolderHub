@@ -16,6 +16,15 @@ public partial class App : Application
     /// <summary>Nasce escondido (é assim que a entrada de inicialização chama).</summary>
     public static bool StartHidden { get; private set; }
 
+    /// <summary>
+    /// A versão do assembly, sem os campos de build. Vem do <c>Version</c> do
+    /// csproj, então é um lugar só para atualizar quando sair uma release.
+    /// </summary>
+    public static string Version { get; } =
+        System.Reflection.Assembly.GetExecutingAssembly().GetName().Version is { } v
+            ? $"{v.Major}.{v.Minor}.{v.Build}"
+            : "1.0.0";
+
     private static FileSystemWatcher? _configWatcher;
     private static DispatcherTimer? _configSettle;
 

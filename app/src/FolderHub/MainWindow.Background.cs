@@ -7,6 +7,7 @@ using System.Windows.Interop;
 using System.Windows.Media.Animation;
 using FolderHub.Interop;
 using FolderHub.Services;
+using FolderHub.Views;
 
 namespace FolderHub;
 
@@ -76,6 +77,13 @@ public partial class MainWindow
     }
 
     private bool _hotKeyFailed;
+
+    /// <summary>
+    /// O Windows recusou a combinação — quase sempre porque outro programa já a
+    /// usa. Fica visível para que a tela de configuração possa dizer isso, em
+    /// vez de deixar um atalho que simplesmente não responde.
+    /// </summary>
+    public bool HotKeyFailed => _hotKeyFailed;
 
     // ------------------------------------------------------------ mensagens
 
@@ -296,11 +304,38 @@ public partial class MainWindow
         if (enable && !App.Background) ToggleResident_Click(sender, e);
     }
 
+    private SettingsWindow? _settings;
+
     /// <summary>
-    /// A engrenagem do cabeçalho. Ainda abre a pasta da configuração: a tela de
-    /// configuração é a próxima a nascer e assume este clique sem mais nada mudar.
+    /// Abre a configuração. Só uma por vez, e presa a esta janela para não se
+    /// perder atrás dela.
     /// </summary>
-    private void Settings_Click(object sender, RoutedEventArgs e) => OpenConfig_Click(sender, e);
+    private void Settings_Click(object sender, RoutedEventArgs e)
+    {
+        if (_settings is { IsLoaded: true })
+        {
+            _settings.Activate();
+            return;
+        }
+
+        // Abrir a configuração tira o foco do hub, e "fechar ao perder o foco"
+        // faria ele sumir por baixo dela.
+        _suppressBlurClose = true;
+
+        // Dono só quando o hub está na tela. Residente e escondido, ele foi
+        // aberto pela bandeja: uma janela presa a outra invisível nasceria
+        // atrás de tudo.
+        _settings = new SettingsWindow();
+        if (IsVisible) _settings.Owner = this;
+        _settings.Closed += (_, _) =>
+        {
+            _settings = null;
+            _suppressBlurClose = false;
+            if (IsVisible) Activate();
+        };
+
+        _settings.Show();
+    }
 
     private void OpenConfig_Click(object sender, RoutedEventArgs e)
     {

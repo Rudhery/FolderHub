@@ -123,6 +123,17 @@
     <SolidColorBrush x:Key="ControlBgHover" Color="#12FFFFFF" />
     <SolidColorBrush x:Key="ControlBorderHover" Color="#1FFFFFFF" />
 
+    <!--
+        chavinha. Sem cor de destaque no sistema, "ligado" precisa ser o próprio
+        contraste: trilho quase branco com o botão escuro por cima.
+    -->
+    <SolidColorBrush x:Key="ToggleTrack" Color="#0FFFFFFF" />
+    <SolidColorBrush x:Key="ToggleTrackBorder" Color="#24FFFFFF" />
+    <SolidColorBrush x:Key="ToggleTrackOn" Color="#D9EEF1F4" />
+    <SolidColorBrush x:Key="ToggleTrackOnBorder" Color="#00FFFFFF" />
+    <SolidColorBrush x:Key="ToggleKnob" Color="#8FA6BD" />
+    <SolidColorBrush x:Key="ToggleKnobOn" Color="#1A1C20" />
+
     <!--  barra de rolagem  -->
     <SolidColorBrush x:Key="ScrollThumb" Color="#1FFFFFFF" />
     <SolidColorBrush x:Key="ScrollThumbHover" Color="#3DFFFFFF" />

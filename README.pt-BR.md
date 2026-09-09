@@ -23,7 +23,7 @@ Colocou um atalho na pasta, aparece. Apertou `Ctrl+Alt+Space`, ele está lá em 
 ---
 
 **[Instalando](#instalando)** · **[Abas](#abas)** · **[Ordenando](#ordenando)** ·
-**[Teclado](#teclado)** · **[Configuração](#configuração)** ·
+**[Teclado](#teclado)** · **[Ajustes](#ajustes)** · **[Configuração](#configuração)** ·
 **[Desempenho](#desempenho)** · **[Temas](#temas)** ·
 **[Como foi feito](#como-foi-feito)** · **[Contribuindo](CONTRIBUTING.md)**
 
@@ -175,10 +175,33 @@ funcionando, e ele aceita `01 -`, `01.`, `01_` e `01)`.
 | `Ctrl+1` … `Ctrl+9` | vai direto para uma aba |
 | `Ctrl+O` | troca a pasta da aba ativa |
 | botão direito num card | executar como administrador / mostrar na pasta |
-| botão direito no cabeçalho | modo residente, iniciar com o Windows, abrir a config |
+| botão direito no cabeçalho | configuração, modo residente, iniciar com o Windows |
 | duplo clique no cabeçalho | abre a pasta no Explorer |
 
+## Ajustes
+
+A engrenagem no cabeçalho — ou **Configuração…** no menu da bandeja, que é o
+caminho quando o hub está residente e escondido.
+
+<p align="center">
+<img src="docs/settings.png" width="760" alt="Configuração do FolderHub">
+</p>
+
+Não existe botão de OK: cada mudança é gravada e aplicada na hora. Adicione um hub
+e a aba aparece; aumente o limite de colunas e a janela se redimensiona enquanto
+você olha. A exceção é o arquivo de tema, que é lido na abertura — a própria tela
+avisa isso onde você o escolhe.
+
+O atalho global não é digitado, é gravado: clique no campo e pressione a
+combinação. Ele recusa uma sem modificador porque o Windows recusa também, e
+avisa quando há atalho definido mas ele não está valendo — seja porque o hub não
+está residente, e então não há ninguém escutando, seja porque outro programa já
+usa aquela combinação.
+
 ## Configuração
+
+Tudo que a tela de ajustes grava vai para cá, e o arquivo continua editável à
+mão: o app observa e relê quando ele muda.
 
 `%APPDATA%\FolderHub\config.json`
 

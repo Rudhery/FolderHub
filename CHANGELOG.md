@@ -18,6 +18,30 @@ Notable changes, newest first. Dates are the day the version was cut.
   few leftover pixels and left half a row against the footer; the scrollbar also
   floats in the window padding instead of touching the last column of cards.
 
+### A settings screen
+
+Reachable from the gear in the header, and from the tray menu — which is the way
+in when the hub is resident and hidden.
+
+- Five sections: Hubs, General, Shortcuts, Appearance, About.
+- No OK button. Every change is written and applied at once: it edits the same
+  `HubConfig` the app runs on and saves, and saving already tells the hub to
+  reconcile. Adding a hub grows the tab strip; raising the column limit resizes
+  the window while you watch.
+- Hubs can be added, renamed, reordered and removed, up to eight — past that the
+  tab strip stops fitting. Clearing a name goes back to the folder's own, so
+  renaming it in Explorer keeps showing through.
+- The hotkey is recorded rather than typed: click and press the combination. It
+  refuses one without a modifier because Windows refuses it too, and it says when
+  a hotkey is set but not working — the hub is not resident so nothing is
+  listening, or another program already owns the combination.
+- `HotKeyText` now writes what `GlobalHotKey` reads, and a test walks the whole
+  keyboard proving the round trip. The two used to be separate copies, and a
+  divergence between them produced no error at all — the hotkey just stopped
+  working.
+- New controls behind it: `HubToggle`, `HubOption`, `HubStepper`, `HubHotKeyBox`,
+  plus styles for text fields and selects.
+
 ### A design layer over WPF
 
 New `Controls/` and a split theme, so a new screen writes what it wants rather
