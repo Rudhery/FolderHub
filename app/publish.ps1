@@ -17,11 +17,21 @@
 param(
     [switch]$SelfContained,
     [switch]$Installer,
-    [string]$Version = '1.0.0',
+    [string]$Version,
     [string]$OutDir = "$PSScriptRoot\dist"
 )
 
 $ErrorActionPreference = 'Stop'
+
+# A versão vem do csproj, que é onde ela já existe. Um default fixo aqui
+# envelhece calado: o build sai do código novo com o nome da versão antiga,
+# e o instalador passa a mentir sobre o que carrega dentro.
+if (-not $Version) {
+    $csproj = "$PSScriptRoot\src\FolderHub\FolderHub.csproj"
+    $Version = ([xml](Get-Content $csproj)).Project.PropertyGroup.Version |
+        Where-Object { $_ } | Select-Object -First 1
+    if (-not $Version) { throw "não achei <Version> em $csproj" }
+}
 
 # O instalador é distribuído para quem talvez não tenha o runtime .NET, então
 # ele sempre carrega a build autocontida.
