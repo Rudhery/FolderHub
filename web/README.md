@@ -78,7 +78,11 @@ diferentes do aplicativo:
 
 ## O que ainda falta
 
-- **Não existe botão de download.** O design não previa nenhum, e uma landing
-  cujo objetivo é entregar o instalador provavelmente quer um. Por ora a pílula
-  de versão leva para a página de releases.
+- **O botão de download leva para a página de releases**, não para o arquivo. O
+  design não previa botão nenhum; ele foi acrescentado porque uma landing cujo
+  objetivo é entregar o instalador precisa de um. Apontar direto para o `.exe`
+  da última versão exigiria ou fixar a versão no HTML — que envelhece a cada
+  release — ou uma chamada à API do GitHub em tempo de carregamento.
+- **A versão está escrita no HTML**, em três lugares, e não sai do changelog nem
+  da API. Sobe junto no commit de release, como subiu na 1.1.0.
 - Um GIF do aplicativo em uso valeria mais que o mockup estático.
