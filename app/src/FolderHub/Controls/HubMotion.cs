@@ -18,20 +18,25 @@ namespace FolderHub.Controls;
 /// </summary>
 public static class HubMotion
 {
+    /// <summary>Quando ligado, as transições são instantâneas.</summary>
+    public static bool Reduced { get; private set; }
+
+    public static void SetReduced(bool reduced) => Reduced = reduced;
+
     /// <summary>Troca de estado (hover, seleção). Curto o bastante para não atrasar o clique.</summary>
-    public static Duration State => new(TimeSpan.FromMilliseconds(150));
+    public static Duration State => new(TimeSpan.FromMilliseconds(Reduced ? 0 : 150));
 
     /// <summary>Algo entrando na tela.</summary>
-    public static Duration Enter => new(TimeSpan.FromMilliseconds(200));
+    public static Duration Enter => new(TimeSpan.FromMilliseconds(Reduced ? 0 : 200));
 
     /// <summary>O deslize que acompanha a entrada — um pouco mais longo, para assentar depois do fade.</summary>
-    public static Duration Slide => new(TimeSpan.FromMilliseconds(280));
+    public static Duration Slide => new(TimeSpan.FromMilliseconds(Reduced ? 0 : 280));
 
     /// <summary>Algo saindo. Sempre mais rápido que a entrada: esperar para sumir irrita.</summary>
-    public static Duration Exit => new(TimeSpan.FromMilliseconds(100));
+    public static Duration Exit => new(TimeSpan.FromMilliseconds(Reduced ? 0 : 100));
 
     /// <summary>Véu do arrastar e soltar, que aparece e some no mesmo ritmo.</summary>
-    public static Duration Veil => new(TimeSpan.FromMilliseconds(140));
+    public static Duration Veil => new(TimeSpan.FromMilliseconds(Reduced ? 0 : 140));
 
     /// <summary>Atraso entre um card e o próximo na entrada escalonada.</summary>
     public const int StaggerStepMs = 12;
@@ -56,12 +61,29 @@ public static class HubMotion
 
     /// <summary>Aparece.</summary>
     public static void FadeIn(UIElement element, Duration? duration = null)
-        => element.BeginAnimation(UIElement.OpacityProperty,
+    {
+        if (Reduced)
+        {
+            element.BeginAnimation(UIElement.OpacityProperty, null);
+            element.Opacity = 1;
+            return;
+        }
+
+        element.BeginAnimation(UIElement.OpacityProperty,
             new DoubleAnimation(0, 1, duration ?? Enter));
+    }
 
     /// <summary>Some, e avisa quando terminou — é onde o fechar de verdade acontece.</summary>
     public static void FadeOut(UIElement element, Action? then = null, Duration? duration = null)
     {
+        if (Reduced)
+        {
+            element.BeginAnimation(UIElement.OpacityProperty, null);
+            element.Opacity = 0;
+            then?.Invoke();
+            return;
+        }
+
         var fade = new DoubleAnimation(element.Opacity, 0, duration ?? Exit);
         if (then is not null) fade.Completed += (_, _) => then();
         element.BeginAnimation(UIElement.OpacityProperty, fade);
@@ -78,6 +100,15 @@ public static class HubMotion
         {
             transform = new TranslateTransform(0, lift);
             element.RenderTransform = transform;
+        }
+
+        if (Reduced)
+        {
+            element.BeginAnimation(UIElement.OpacityProperty, null);
+            element.Opacity = 1;
+            transform.BeginAnimation(TranslateTransform.YProperty, null);
+            transform.Y = 0;
+            return;
         }
 
         element.BeginAnimation(UIElement.OpacityProperty,

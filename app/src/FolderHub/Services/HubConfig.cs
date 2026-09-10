@@ -49,8 +49,47 @@ public sealed class HubConfig
     /// </summary>
     public string? ThemeFile { get; set; }
 
+    /// <summary>Tema visual do FolderHub. Sistema fica reservado para depois.</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public ThemeMode ThemeMode { get; set; } = ThemeMode.Dark;
+
     /// <summary>Máximo de colunas do grid.</summary>
     public int MaxColumns { get; set; } = 7;
+
+    /// <summary>
+    /// Uma pasta só, sem faixa de abas. É modo de trabalho, não remoção: as
+    /// outras pastas continuam na configuração, apenas não aparecem.
+    /// </summary>
+    public bool SingleFolder { get; set; }
+
+    /// <summary>Reabre no hub em que você estava.</summary>
+    public bool RememberLastHub { get; set; } = true;
+
+    /// <summary>Qual era esse hub. Gravado ao trocar de aba.</summary>
+    public int LastHub { get; set; }
+
+    /// <summary>Tab sozinho troca de hub. Desligado, só Ctrl+Tab troca.</summary>
+    public bool TabSwitchesHub { get; set; } = true;
+
+    /// <summary>Mostra o caminho da pasta como subtítulo do hub.</summary>
+    public bool ShowPath { get; set; } = true;
+
+    /// <summary>Mostra "N atalhos" no rodapé do hub.</summary>
+    public bool ShowCount { get; set; } = true;
+
+    /// <summary>Corta as entradas e transições, para quem prefere menos movimento.</summary>
+    public bool ReduceMotion { get; set; }
+
+    /// <summary>Tamanho dos cards.</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public CardDensity Density { get; set; } = CardDensity.Default;
+
+    /// <summary>
+    /// Quanto do desktop aparece atrás da janela, de 0 (opaca) a 100. O acrílico
+    /// do Windows não expõe um nível, então isto é a opacidade da superfície que
+    /// o app pinta por cima dele.
+    /// </summary>
+    public int Transparency { get; set; } = 30;
 
     // ------------------------------------------------------------------
 

@@ -21,6 +21,7 @@
   <ItemGroup>
     <!-- Manrope e JetBrains Mono (SIL Open Font License) embutidas no exe -->
     <Resource Include="Assets\Fonts\*.ttf" />
+    <Page Update="Themes\Light.xaml" />
   </ItemGroup>
 
 </Project>

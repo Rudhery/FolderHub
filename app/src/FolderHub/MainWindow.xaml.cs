@@ -16,6 +16,9 @@ public partial class MainWindow : HubWindow
 {
     // Card + 5px de margem de cada lado = 10px de gap, como no design. Vem do
     // tema para que um arquivo de tema possa mudar o tamanho dos cards.
+    // Card + 5px de margem de cada lado = 10px de gap, como no design. Sai do
+    // dicionário vivo, onde a densidade escolhida já foi aplicada por cima do
+    // que o tema pediu — assim existe uma medida só, e não duas concorrendo.
     private double CardOuterWidth => ThemeSize("CardWidth", 160) + 10;
     private double CardOuterHeight => ThemeSize("CardHeight", 118) + 10;
 
@@ -73,7 +76,11 @@ public partial class MainWindow : HubWindow
         Cards.Drop += Cards_Drop;
 
         BuildTabs(tabs);
-        ActivateTab(tabs[0], resize: true, animate: true);
+
+        int initialIndex = App.Config.SingleFolder || !App.Config.RememberLastHub
+            ? 0
+            : Math.Clamp(App.Config.LastHub, 0, _tabs.Count - 1);
+        ActivateTab(_tabs[initialIndex], resize: true, animate: true);
         WatchConfig();
     }
 
@@ -201,6 +208,8 @@ public partial class MainWindow : HubWindow
             ? $"{count} · hub {hub} de {_tabs.Count}"
             : count;
 
+        CountText.Visibility = App.Config.ShowCount ? Visibility.Visible : Visibility.Collapsed;
+
         if (_visible.Count > 0) Cards.SelectedIndex = 0;
     }
 
@@ -208,6 +217,7 @@ public partial class MainWindow : HubWindow
     {
         TitleText.Text = PathDisplay.FolderName(_folder);
         SubtitleText.Text = PathDisplay.Shorten(_folder);
+        SubtitleText.Visibility = App.Config.ShowPath ? Visibility.Visible : Visibility.Collapsed;
         Title = $"{TitleText.Text} — FolderHub";
 
         // A busca varre só o hub aberto; dizer quantos existem evita prometer
@@ -320,7 +330,7 @@ public partial class MainWindow : HubWindow
     /// <summary>Entrada escalonada dos cards — dispara no Loaded de cada container.</summary>
     private void Card_Loaded(object sender, RoutedEventArgs e)
     {
-        if (!_animateIntro || sender is not ListBoxItem container) return;
+        if (!_animateIntro || App.Config.ReduceMotion || sender is not ListBoxItem container) return;
 
         int index = Cards.ItemContainerGenerator.IndexFromContainer(container);
         if (index < 0) index = 0;
@@ -434,7 +444,7 @@ public partial class MainWindow : HubWindow
                 e.Handled = true;
                 return;
 
-            case Key.Tab:
+            case Key.Tab when ctrl || App.Config.TabSwitchesHub:
                 MoveTab(shift ? -1 : 1);
                 e.Handled = true;
                 return;

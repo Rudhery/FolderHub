@@ -21,7 +21,9 @@ public static class WindowEffects
             source.CompositionTarget.BackgroundColor = Colors.Transparent;
         }
 
-        int dark = 1;
+        // O backdrop nativo também precisa acompanhar o tema: manter o modo
+        // escuro ligado no tema claro deixa o vidro branco com um halo cinza.
+        int dark = LiveTheme.AppliedMode == ThemeMode.Dark ? 1 : 0;
         Native.DwmSetWindowAttribute(hwnd, Native.DWMWA_USE_IMMERSIVE_DARK_MODE, ref dark, sizeof(int));
 
         int corner = Native.DWMWCP_ROUND;

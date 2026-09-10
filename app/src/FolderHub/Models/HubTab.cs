@@ -53,6 +53,12 @@ public sealed class HubTab : INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// O caminho como se lê, com a pasta do usuário virando "~". O caminho
+    /// inteiro não cabe numa linha de lista e o começo dele é sempre igual.
+    /// </summary>
+    public string ShortPath => Services.PathDisplay.Shorten(Path);
+
     /// <summary>Itens da aba. Fica vazia até a aba ser aberta.</summary>
     public List<AppItem> Items { get; } = [];
 
@@ -78,6 +84,23 @@ public sealed class HubTab : INotifyPropertyChanged
 
     /// <summary>Já foi aberta alguma vez? Enquanto não, nenhum ícone foi extraído.</summary>
     public bool Visited { get; set; }
+
+    private string _slot = string.Empty;
+
+    /// <summary>
+    /// Qual aba ela é na faixa — "Tab 1", "Tab 2". Só a tela de configuração
+    /// usa: dentro do hub a posição é visível, na lista de ajustes não.
+    /// </summary>
+    public string Slot
+    {
+        get => _slot;
+        set
+        {
+            if (_slot == value) return;
+            _slot = value;
+            Notify();
+        }
+    }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 

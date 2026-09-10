@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -9,30 +10,29 @@ using FolderHub.Services;
 
 namespace FolderHub.Views;
 
-/// <summary>Uma seção da navegação lateral.</summary>
-public sealed record SettingsSection(string Name, HubGlyph Glyph);
+/// <summary>Uma seção da navegação lateral, com o que o cabeçalho mostra ao abri-la.</summary>
+public sealed record SettingsSection(string Name, string Title, string Subtitle);
 
-/// <summary>Uma linha da tabela de teclas.</summary>
-public sealed record KeyHint(string Keys, string What);
+/// <summary>Uma tecla do atalho global. <c>Joiner</c> desenha o "+" antes dela.</summary>
+public sealed record KeyPart(string Key, bool Joiner);
 
 /// <summary>
 /// A tela de configuração.
 ///
 /// Ela não guarda estado próprio: edita <see cref="App.Config"/>, que é a mesma
 /// instância que o app inteiro usa, e chama <c>Save()</c>. Gravar dispara
-/// <see cref="HubConfig.Changed"/>, que o hub já sabe aplicar quente — trocar o
-/// atalho global, refazer as abas, redimensionar. Não existe botão de OK: cada
-/// ajuste vale no instante em que é feito.
+/// <see cref="HubConfig.Changed"/>, que o hub já sabe aplicar quente. Não há
+/// botão de OK — "Concluir" só fecha, porque tudo já valeu.
 ///
-/// Por isso também escuta o mesmo evento. A configuração pode mudar por fora —
-/// arrastando uma aba no hub, ou editando o JSON à mão — e a tela precisa
+/// Por isso também escuta o mesmo evento: a configuração pode mudar por fora,
+/// arrastando uma aba no hub ou editando o JSON à mão, e a tela precisa
 /// acompanhar em vez de mostrar um retrato velho.
 /// </summary>
 public partial class SettingsWindow : HubWindow
 {
     /// <summary>
     /// O limite do desenho. Passar disso é possível editando o JSON, e o hub
-    /// aguenta; a tela é que deixa de ser legível.
+    /// aguenta; a faixa de abas é que deixa de caber.
     /// </summary>
     public const int MaxHubs = 8;
 
@@ -47,34 +47,33 @@ public partial class SettingsWindow : HubWindow
 
     private bool _loading;
 
-    public SettingsWindow()
+    /// <summary>Esperando a combinação do atalho global.</summary>
+    private bool _recording;
+
+    private Point _dragStart;
+    private HubTab? _dragging;
+
+    /// <summary>
+    /// Sem acrílico de propósito — veja <see cref="HubWindow"/>. A superfície
+    /// dela é quase opaca, e o canto de 22px do design só fecha certo quando a
+    /// forma é desenhada pelo conteúdo.
+    /// </summary>
+    public SettingsWindow() : base(acrylic: true)
     {
+        _loading = true;
         InitializeComponent();
 
         HubList.ItemsSource = _hubs;
 
         Sections.ItemsSource = new[]
         {
-            new SettingsSection("Hubs", HubGlyph.Grid),
-            new SettingsSection("Geral", HubGlyph.Settings),
-            new SettingsSection("Atalhos", HubGlyph.Keyboard),
-            new SettingsSection("Aparência", HubGlyph.Appearance),
-            new SettingsSection("Sobre", HubGlyph.Info)
+            new SettingsSection("Hubs", "Hubs", "Como o Folder Hub monta os cards de atalho"),
+            new SettingsSection("Geral", "Geral", "Comportamento do aplicativo no Windows"),
+            new SettingsSection("Atalhos", "Atalhos", "Teclas para abrir o hub e navegar entre os cards"),
+            new SettingsSection("Aparência", "Aparência", "Tema, densidade e transparência do modal"),
+            new SettingsSection("Sobre", "Sobre", "Versão, licença e onde reportar problemas")
         };
         Sections.SelectedIndex = 0;
-
-        KeyReference.ItemsSource = new[]
-        {
-            new KeyHint("digite", "filtra os cards"),
-            new KeyHint("↑ ↓ ← →", "anda pelos cards"),
-            new KeyHint("Enter", "abre o card escolhido"),
-            new KeyHint("/", "volta o foco para a busca"),
-            new KeyHint("Tab", "troca de hub"),
-            new KeyHint("Ctrl+1…9", "vai direto para um hub"),
-            new KeyHint("Ctrl+O", "troca a pasta do hub aberto"),
-            new KeyHint("F5", "relê a pasta e os ícones"),
-            new KeyHint("Esc", "limpa a busca, ou fecha")
-        };
 
         SortSelect.ItemsSource = new[]
         {
@@ -83,6 +82,9 @@ public partial class SettingsWindow : HubWindow
             "Nome (Z → A)",
             "Mais recentes"
         };
+
+        LanguageSelect.ItemsSource = new[] { "Português (Brasil)" };
+        LanguageSelect.SelectedIndex = 0;
 
         Load();
         HubConfig.Changed += OnConfigChanged;
@@ -127,17 +129,31 @@ public partial class SettingsWindow : HubWindow
             _hubs.Clear();
             foreach (var tab in config.Tabs)
             {
-                _hubs.Add(new HubTab { Path = tab.Path, CustomName = tab.Name });
+                _hubs.Add(new HubTab
+                {
+                    Path = tab.Path,
+                    CustomName = tab.Name,
+                    Count = FolderScanner.CountSupported(tab.Path)
+                });
             }
 
-            UpdateHubCount();
+            RenumberHubs();
+
+            ModeSingle.IsChecked = config.SingleFolder;
+            ModeMulti.IsChecked = !config.SingleFolder;
 
             StartupToggle.IsChecked = StartupRegistration.IsEnabled;
             ResidentToggle.IsChecked = config.Background;
             CloseAfterToggle.IsChecked = config.CloseAfterLaunch;
             CloseOnBlurToggle.IsChecked = config.CloseOnBlur;
+            LastHubToggle.IsChecked = config.RememberLastHub;
+            TabSwitchToggle.IsChecked = config.TabSwitchesHub;
 
-            HotKeyBox.HotKey = config.HotKey ?? string.Empty;
+            ShowPathToggle.IsChecked = config.ShowPath;
+            ShowCountToggle.IsChecked = config.ShowCount;
+            ReduceMotionToggle.IsChecked = config.ReduceMotion;
+
+            ShowHotKey(config.HotKey ?? string.Empty);
             UpdateHotKeyWarning();
 
             SortSelect.SelectedIndex = config.Sort switch
@@ -148,13 +164,27 @@ public partial class SettingsWindow : HubWindow
                 _ => 0
             };
 
+            DensitySegment.SelectedIndex = config.Density switch
+            {
+                CardDensity.Compact => 0,
+                CardDensity.Large => 2,
+                _ => 1
+            };
+
             ColumnsStepper.Value = Math.Clamp(config.MaxColumns, 3, 10);
 
-            UpdateThemePath();
+            TransparencySlider.Value = Math.Clamp(config.Transparency, 0, 90);
+            TransparencyValue.Text = $"{(int)TransparencySlider.Value}%";
 
-            VersionText.Text = $"versão {App.Version}";
+            UpdateThemePath();
+            ThemeDark.IsChecked = config.ThemeMode == FolderHub.Services.ThemeMode.Dark;
+            ThemeLight.IsChecked = config.ThemeMode == FolderHub.Services.ThemeMode.Light;
+            UpdateModeDependents();
+
+            SidebarVersion.Text = $"v{App.Version}";
+            VersionText.Text = $"v{App.Version} · .NET 10";
             ConfigPath.Text = HubConfig.FilePath;
-            StatusText.Text = PathDisplay.Shorten(HubConfig.Directory);
+            InstallPath.Text = Path.GetDirectoryName(Environment.ProcessPath) ?? "—";
         }
         finally
         {
@@ -170,18 +200,29 @@ public partial class SettingsWindow : HubWindow
         finally { _saving = false; }
     }
 
+    private void Say(string message) => StatusText.Text = message;
+
+    private void SayIdle() => StatusText.Text = "alterações salvas automaticamente";
+
     // --------------------------------------------------------------- navegação
 
     private void Sections_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        int index = Sections.SelectedIndex;
-        if (index < 0) return;
+        if (Sections.SelectedItem is not SettingsSection section) return;
 
+        PageTitle.Text = section.Title;
+        PageSubtitle.Text = section.Subtitle;
+
+        int index = Sections.SelectedIndex;
         PageHubs.Visibility = index == 0 ? Visibility.Visible : Visibility.Collapsed;
         PageGeneral.Visibility = index == 1 ? Visibility.Visible : Visibility.Collapsed;
         PageKeys.Visibility = index == 2 ? Visibility.Visible : Visibility.Collapsed;
         PageLook.Visibility = index == 3 ? Visibility.Visible : Visibility.Collapsed;
         PageAbout.Visibility = index == 4 ? Visibility.Visible : Visibility.Collapsed;
+
+        // Sair da aba de atalhos no meio de uma gravação deixaria a tela
+        // esperando uma tecla que ninguém mais vai apertar.
+        if (index != 2) StopRecording();
     }
 
     private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => DragFrom(e);
@@ -190,16 +231,14 @@ public partial class SettingsWindow : HubWindow
 
     // -------------------------------------------------------------------- hubs
 
-    private static HubTab? TabOf(object sender)
-        => (sender as FrameworkElement)?.Tag as HubTab;
+    private static HubTab? TabOf(object sender) => (sender as FrameworkElement)?.Tag as HubTab;
 
-    private void UpdateHubCount()
+    private void RenumberHubs()
     {
-        AddHub.IsEnabled = _hubs.Count < MaxHubs;
+        for (int i = 0; i < _hubs.Count; i++) _hubs[i].Slot = $"Tab {i + 1}";
 
-        HubCountHint.Text = _hubs.Count >= MaxHubs
-            ? $"{MaxHubs} é o limite — mais que isso a faixa de abas deixa de caber."
-            : $"{_hubs.Count} de {MaxHubs}";
+        AddHub.IsEnabled = _hubs.Count < MaxHubs;
+        HubsGroup.Aside = $"{_hubs.Count} de {MaxHubs}";
     }
 
     /// <summary>Passa a lista da tela para a configuração e grava.</summary>
@@ -211,7 +250,7 @@ public partial class SettingsWindow : HubWindow
             Name = string.IsNullOrWhiteSpace(h.CustomName) ? null : h.CustomName
         })];
 
-        UpdateHubCount();
+        RenumberHubs();
         Commit();
     }
 
@@ -224,12 +263,13 @@ public partial class SettingsWindow : HubWindow
 
         if (_hubs.Any(h => string.Equals(h.Path, folder, StringComparison.OrdinalIgnoreCase)))
         {
-            StatusText.Text = "essa pasta já é um hub";
+            Say("essa pasta já é um hub");
             return;
         }
 
-        _hubs.Add(new HubTab { Path = folder });
+        _hubs.Add(new HubTab { Path = folder, Count = FolderScanner.CountSupported(folder) });
         SaveHubs();
+        SayIdle();
         Activate();
     }
 
@@ -240,34 +280,60 @@ public partial class SettingsWindow : HubWindow
         // Um hub sem nenhuma pasta não existe: o app não teria o que mostrar.
         if (_hubs.Count <= 1)
         {
-            StatusText.Text = "o último hub não pode sair";
+            Say("o último hub não pode sair");
             return;
         }
 
         _hubs.Remove(tab);
         SaveHubs();
+        SayIdle();
     }
 
-    private void HubUp_Click(object sender, RoutedEventArgs e) => Move(TabOf(sender), -1);
+    // ------------------------------------------------------- arrastar e ordenar
 
-    private void HubDown_Click(object sender, RoutedEventArgs e) => Move(TabOf(sender), 1);
-
-    private void Move(HubTab? tab, int delta)
+    private void Grip_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (tab is null) return;
+        _dragStart = e.GetPosition(this);
+        _dragging = TabOf(sender);
+    }
 
-        int from = _hubs.IndexOf(tab);
-        int to = from + delta;
-        if (from < 0 || to < 0 || to >= _hubs.Count) return;
+    private void Grip_MouseMove(object sender, MouseEventArgs e)
+    {
+        if (_dragging is null || e.LeftButton != MouseButtonState.Pressed) return;
+
+        // Um tremor de mão não deve virar arrasto.
+        var moved = e.GetPosition(this) - _dragStart;
+        if (Math.Abs(moved.X) < SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(moved.Y) < SystemParameters.MinimumVerticalDragDistance) return;
+
+        var carried = _dragging;
+        _dragging = null;
+
+        DragDrop.DoDragDrop((DependencyObject)sender, carried, DragDropEffects.Move);
+    }
+
+    private void HubRow_DragOver(object sender, DragEventArgs e)
+    {
+        e.Effects = e.Data.GetDataPresent(typeof(HubTab)) ? DragDropEffects.Move : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void HubRow_Drop(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetData(typeof(HubTab)) is not HubTab carried) return;
+        if (TabOf(sender) is not { } target || ReferenceEquals(carried, target)) return;
+
+        int from = _hubs.IndexOf(carried);
+        int to = _hubs.IndexOf(target);
+        if (from < 0 || to < 0) return;
 
         _hubs.Move(from, to);
         SaveHubs();
+        Say($"{carried.Name} agora é a aba {to + 1}");
+        e.Handled = true;
     }
 
-    private void HubReveal_Click(object sender, RoutedEventArgs e)
-    {
-        if (TabOf(sender) is { } tab) Launcher.OpenFolder(tab.Path);
-    }
+    // ------------------------------------------------------------ nome do hub
 
     private void HubName_KeyDown(object sender, KeyEventArgs e)
     {
@@ -303,19 +369,40 @@ public partial class SettingsWindow : HubWindow
         SaveHubs();
     }
 
+    // --------------------------------------------------------- modo de trabalho
+
+    private void Mode_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+
+        App.Config.SingleFolder = ModeSingle.IsChecked == true;
+        Commit();
+        UpdateModeDependents();
+    }
+
+    /// <summary>
+    /// Os ajustes que só fazem sentido com vários hubs apagam no modo pasta
+    /// única, em vez de ficarem ligados sem efeito nenhum.
+    /// </summary>
+    private void UpdateModeDependents()
+    {
+        bool multi = !App.Config.SingleFolder;
+
+        LastHubRow.IsEnabled = multi;
+        TabSwitchRow.IsEnabled = multi;
+    }
+
     // ------------------------------------------------------------------- geral
 
     private void Startup_Click(object sender, RoutedEventArgs e)
     {
         if (_loading) return;
 
-        bool wanted = StartupToggle.IsChecked == true;
-
         // Isto é registro do Windows, não configuração do app — pode falhar por
         // política da máquina, e nesse caso a chave volta para o que ela é.
-        if (!StartupRegistration.Set(wanted))
+        if (!StartupRegistration.Set(StartupToggle.IsChecked == true))
         {
-            StatusText.Text = "não consegui escrever na chave de inicialização";
+            Say("não consegui escrever na chave de inicialização");
         }
 
         StartupToggle.IsChecked = StartupRegistration.IsEnabled;
@@ -330,37 +417,150 @@ public partial class SettingsWindow : HubWindow
         UpdateHotKeyWarning();
     }
 
-    private void CloseAfter_Click(object sender, RoutedEventArgs e)
+    private void CloseAfter_Click(object sender, RoutedEventArgs e) => Flip(c => c.CloseAfterLaunch = CloseAfterToggle.IsChecked == true);
+
+    private void CloseOnBlur_Click(object sender, RoutedEventArgs e) => Flip(c => c.CloseOnBlur = CloseOnBlurToggle.IsChecked == true);
+
+    private void LastHub_Click(object sender, RoutedEventArgs e) => Flip(c => c.RememberLastHub = LastHubToggle.IsChecked == true);
+
+    private void TabSwitch_Click(object sender, RoutedEventArgs e) => Flip(c => c.TabSwitchesHub = TabSwitchToggle.IsChecked == true);
+
+    private void ShowPath_Click(object sender, RoutedEventArgs e) => Flip(c => c.ShowPath = ShowPathToggle.IsChecked == true);
+
+    private void ShowCount_Click(object sender, RoutedEventArgs e) => Flip(c => c.ShowCount = ShowCountToggle.IsChecked == true);
+
+    private void ReduceMotion_Click(object sender, RoutedEventArgs e) => Flip(c => c.ReduceMotion = ReduceMotionToggle.IsChecked == true);
+
+    private void Flip(Action<HubConfig> change)
     {
         if (_loading) return;
 
-        App.Config.CloseAfterLaunch = CloseAfterToggle.IsChecked == true;
+        change(App.Config);
         Commit();
     }
 
-    private void CloseOnBlur_Click(object sender, RoutedEventArgs e)
+    private void Export_Click(object sender, RoutedEventArgs e)
     {
-        if (_loading) return;
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Exportar a configuração",
+            Filter = "Configuração do FolderHub (*.json)|*.json",
+            FileName = "folderhub-config.json"
+        };
 
-        App.Config.CloseOnBlur = CloseOnBlurToggle.IsChecked == true;
-        Commit();
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            File.WriteAllText(dialog.FileName, App.Config.ToJson());
+            Say("configuração exportada");
+        }
+        catch (Exception error)
+        {
+            Log.Warn("não consegui exportar a configuração", error);
+            Say("não consegui gravar o arquivo");
+        }
+
+        Activate();
     }
 
     // ----------------------------------------------------------------- atalhos
 
-    private void HotKey_Changed(object? sender, EventArgs e)
+    private void ShowHotKey(string spec)
     {
-        if (_loading) return;
+        var parts = spec.Split('+', StringSplitOptions.RemoveEmptyEntries)
+            .Select((part, index) => new KeyPart(Pretty(part.Trim()), index > 0))
+            .ToList();
 
-        App.Config.HotKey = HotKeyBox.HotKey;
+        HotKeyParts.ItemsSource = parts;
+        HotKeyParts.Visibility = parts.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    /// <summary>O nome que a config guarda nem sempre é o que se lê numa tecla.</summary>
+    private static string Pretty(string part) => part.ToLowerInvariant() switch
+    {
+        "space" => "Espaço",
+        "enter" or "return" => "Enter",
+        "escape" or "esc" => "Esc",
+        _ => part
+    };
+
+    private void HotKeyChange_Click(object sender, RoutedEventArgs e)
+    {
+        if (_recording) StopRecording();
+        else StartRecording();
+    }
+
+    private void StartRecording()
+    {
+        _recording = true;
+
+        HotKeyParts.Visibility = Visibility.Collapsed;
+        HotKeyPrompt.Visibility = Visibility.Visible;
+        HotKeyButton.Visibility = Visibility.Collapsed;
+        HotKeyRecording.Visibility = Visibility.Visible;
+
+        HotKeyBox.Background = (System.Windows.Media.Brush)FindResource("SunkenBgStrong");
+        HotKeyBox.BorderBrush = (System.Windows.Media.Brush)FindResource("SunkenBorderStrong");
+
+        Focus();
+    }
+
+    private void StopRecording()
+    {
+        if (!_recording) return;
+
+        _recording = false;
+
+        HotKeyPrompt.Visibility = Visibility.Collapsed;
+        HotKeyRecording.Visibility = Visibility.Collapsed;
+        HotKeyButton.Visibility = Visibility.Visible;
+
+        HotKeyBox.Background = (System.Windows.Media.Brush)FindResource("SunkenBg");
+        HotKeyBox.BorderBrush = (System.Windows.Media.Brush)FindResource("SunkenBorder");
+
+        ShowHotKey(App.Config.HotKey ?? string.Empty);
+    }
+
+    protected override void OnPreviewKeyDown(KeyEventArgs e)
+    {
+        base.OnPreviewKeyDown(e);
+
+        if (!_recording) return;
+
+        // A janela fecha no Esc; enquanto grava, o Esc é da gravação.
+        if (e.Key == Key.Escape)
+        {
+            e.Handled = true;
+            StopRecording();
+            return;
+        }
+
+        e.Handled = true;
+
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+        if (HotKeyText.IsModifier(key)) return;
+
+        if (!HotKeyText.TryFormat(Keyboard.Modifiers, key, out string spec))
+        {
+            // O Windows recusa um atalho global de tecla solta: ele engoliria
+            // aquela tecla no sistema inteiro.
+            Say("o atalho precisa de Ctrl, Alt, Shift ou Win");
+            return;
+        }
+
+        App.Config.HotKey = spec;
         Commit();
+
+        StopRecording();
         UpdateHotKeyWarning();
+        SayIdle();
     }
 
     /// <summary>
     /// Diz por que o atalho pode não estar valendo. São duas causas diferentes e
-    /// nenhuma delas é visível: sem modo residente não há processo escutando, e
-    /// uma combinação já tomada por outro app é recusada pelo Windows.
+    /// nenhuma delas é visível: sem ícone na bandeja não há processo escutando,
+    /// e uma combinação já tomada por outro app é recusada pelo Windows.
     /// </summary>
     private void UpdateHotKeyWarning()
     {
@@ -372,7 +572,7 @@ public partial class SettingsWindow : HubWindow
         }
         else if (!App.Config.Background)
         {
-            warning = "O atalho só funciona com o hub residente na bandeja — ligue em Geral.";
+            warning = "O atalho só funciona com o ícone na bandeja ligado — está em Geral.";
         }
         else if (Application.Current.MainWindow is MainWindow hub && hub.HotKeyFailed)
         {
@@ -385,27 +585,29 @@ public partial class SettingsWindow : HubWindow
 
     // --------------------------------------------------------------- aparência
 
-    private void Sort_Changed(object sender, SelectionChangedEventArgs e)
+    private void Sort_Changed(object sender, SelectionChangedEventArgs e) => Flip(c => c.Sort = SortSelect.SelectedIndex switch
     {
-        if (_loading) return;
+        1 => SortMode.NameAsc,
+        2 => SortMode.NameDesc,
+        3 => SortMode.Recent,
+        _ => SortMode.Manual
+    });
 
-        App.Config.Sort = SortSelect.SelectedIndex switch
-        {
-            1 => SortMode.NameAsc,
-            2 => SortMode.NameDesc,
-            3 => SortMode.Recent,
-            _ => SortMode.Manual
-        };
+    private void Columns_Changed(object? sender, EventArgs e) => Flip(c => c.MaxColumns = ColumnsStepper.Value);
 
-        Commit();
-    }
-
-    private void Columns_Changed(object? sender, EventArgs e)
+    private void Density_Changed(object sender, SelectionChangedEventArgs e) => Flip(c => c.Density = DensitySegment.SelectedIndex switch
     {
-        if (_loading) return;
+        0 => CardDensity.Compact,
+        2 => CardDensity.Large,
+        _ => CardDensity.Default
+    });
 
-        App.Config.MaxColumns = ColumnsStepper.Value;
-        Commit();
+    private void Transparency_Changed(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        int value = (int)Math.Round(e.NewValue);
+        TransparencyValue.Text = $"{value}%";
+
+        Flip(c => c.Transparency = value);
     }
 
     private void PickTheme_Click(object sender, RoutedEventArgs e)
@@ -438,11 +640,42 @@ public partial class SettingsWindow : HubWindow
         bool has = !string.IsNullOrWhiteSpace(file);
 
         ClearTheme.IsEnabled = has;
+        ThemePath.Text = has ? file : "nenhum";
+    }
 
-        ThemePath.Text = has
-            // O tema entra na abertura: trocar aqui não repinta o que já está na tela.
-            ? $"{file}  ·  vale na próxima abertura"
-            : "nenhum — usando o tema embutido";
+    public void OpenAppearance() => Sections.SelectedIndex = 3;
+
+    private void Theme_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loading || sender is not RadioButton radio || radio.IsChecked != true) return;
+
+        App.Config.ThemeMode = radio == ThemeLight ? FolderHub.Services.ThemeMode.Light : FolderHub.Services.ThemeMode.Dark;
+        Commit();
+        if (StatusText is not null) Say("tema salvo — feche e abra o Folder Hub para aplicar");
+    }
+
+    private void RestartTheme_Click(object sender, RoutedEventArgs e)
+    {
+        string? executable = Environment.ProcessPath;
+        if (string.IsNullOrWhiteSpace(executable)) return;
+
+        try
+        {
+            App.Config.Save();
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = executable,
+                Arguments = "--foreground --appearance",
+                UseShellExecute = true,
+                WorkingDirectory = Path.GetDirectoryName(executable)
+            });
+            Application.Current.Shutdown();
+        }
+        catch (Exception error)
+        {
+            Log.Warn("não consegui reiniciar para aplicar o tema", error);
+            Say("não foi possível reiniciar automaticamente");
+        }
     }
 
     // ------------------------------------------------------------------- sobre
@@ -454,5 +687,44 @@ public partial class SettingsWindow : HubWindow
         if (!File.Exists(HubConfig.FilePath)) App.Config.Save();
 
         Launcher.OpenFolder(HubConfig.Directory);
+    }
+
+    private void OpenLog_Click(object sender, RoutedEventArgs e) => Launcher.OpenFolder(HubConfig.Directory);
+
+    private void Repo_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is not string url) return;
+
+        try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
+        catch (Exception error) { Log.Warn($"não consegui abrir {url}", error); }
+    }
+
+    // ------------------------------------------------------- restaurar padrões
+
+    private void Restore_Click(object sender, RoutedEventArgs e)
+    {
+        // Os hubs NÃO voltam ao padrão: eles são o trabalho do usuário, não uma
+        // preferência. Restaurar aqui apagaria pastas que ele levou tempo
+        // montando, e não haveria como desfazer.
+        var fresh = new HubConfig { Tabs = App.Config.Tabs, ThemeFile = App.Config.ThemeFile };
+
+        App.Config.SingleFolder = fresh.SingleFolder;
+        App.Config.CloseAfterLaunch = fresh.CloseAfterLaunch;
+        App.Config.CloseOnBlur = fresh.CloseOnBlur;
+        App.Config.RememberLastHub = fresh.RememberLastHub;
+        App.Config.TabSwitchesHub = fresh.TabSwitchesHub;
+        App.Config.ShowPath = fresh.ShowPath;
+        App.Config.ShowCount = fresh.ShowCount;
+        App.Config.ReduceMotion = fresh.ReduceMotion;
+        App.Config.Density = fresh.Density;
+        App.Config.Transparency = fresh.Transparency;
+        App.Config.MaxColumns = fresh.MaxColumns;
+        App.Config.Sort = fresh.Sort;
+        App.Config.HotKey = fresh.HotKey;
+        App.Config.ThemeMode = fresh.ThemeMode;
+
+        Commit();
+        Load();
+        Say("padrões restaurados — seus hubs continuam aí");
     }
 }

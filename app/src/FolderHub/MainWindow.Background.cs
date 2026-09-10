@@ -310,7 +310,9 @@ public partial class MainWindow
     /// Abre a configuração. Só uma por vez, e presa a esta janela para não se
     /// perder atrás dela.
     /// </summary>
-    private void Settings_Click(object sender, RoutedEventArgs e)
+    private void Settings_Click(object sender, RoutedEventArgs e) => OpenSettings();
+
+    public void OpenSettings(bool appearance = false)
     {
         if (_settings is { IsLoaded: true })
         {
@@ -326,6 +328,7 @@ public partial class MainWindow
         // aberto pela bandeja: uma janela presa a outra invisível nasceria
         // atrás de tudo.
         _settings = new SettingsWindow();
+        if (appearance) _settings.OpenAppearance();
         if (IsVisible) _settings.Owner = this;
         _settings.Closed += (_, _) =>
         {

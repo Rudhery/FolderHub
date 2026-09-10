@@ -29,6 +29,9 @@
     <SolidColorBrush x:Key="Surface" Color="#DB1A1C20" />
     <!--  rgba(255,255,255,0.07)  -->
     <SolidColorBrush x:Key="SurfaceBorder" Color="#12FFFFFF" />
+
+    <!-- Atualizado por LiveTheme quando o usuário reduz as animações. -->
+    <Duration x:Key="MotionStateDuration">0:0:0.15</Duration>
     <!--  rgba(255,255,255,0.055)  -->
     <SolidColorBrush x:Key="Divider" Color="#0EFFFFFF" />
     <!--  menu flutuante: quase opaco, porque ele sai da janela e não tem acrílico atrás  -->
@@ -127,17 +130,97 @@
         chavinha. Sem cor de destaque no sistema, "ligado" precisa ser o próprio
         contraste: trilho quase branco com o botão escuro por cima.
     -->
-    <SolidColorBrush x:Key="ToggleTrack" Color="#0FFFFFFF" />
-    <SolidColorBrush x:Key="ToggleTrackBorder" Color="#24FFFFFF" />
-    <SolidColorBrush x:Key="ToggleTrackOn" Color="#D9EEF1F4" />
-    <SolidColorBrush x:Key="ToggleTrackOnBorder" Color="#00FFFFFF" />
-    <SolidColorBrush x:Key="ToggleKnob" Color="#8FA6BD" />
-    <SolidColorBrush x:Key="ToggleKnobOn" Color="#1A1C20" />
+    <SolidColorBrush x:Key="ToggleTrack" Color="#12FFFFFF" />
+    <SolidColorBrush x:Key="ToggleTrackBorder" Color="#1FFFFFFF" />
+    <SolidColorBrush x:Key="ToggleTrackOn" Color="#D9DBE4EC" />
+    <SolidColorBrush x:Key="ToggleTrackOnBorder" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="ToggleKnob" Color="#8CEEF1F4" />
+    <SolidColorBrush x:Key="ToggleKnobOn" Color="#14161A" />
 
     <!--  barra de rolagem  -->
     <SolidColorBrush x:Key="ScrollThumb" Color="#1FFFFFFF" />
     <SolidColorBrush x:Key="ScrollThumbHover" Color="#3DFFFFFF" />
     <SolidColorBrush x:Key="ScrollThumbDragging" Color="#5CFFFFFF" />
+
+    <!--
+        ============ MODAL DE CONFIGURAÇÃO ============
+        A janela de configuração não é uma superfície chapada como o hub: o
+        design pede um degradê vertical, porque ela é alta o bastante para que
+        uma cor só ficasse morta de cima a baixo.
+    -->
+
+    <!--  rgba(30,33,38,0.92) → rgba(20,22,26,0.94)  -->
+    <LinearGradientBrush x:Key="ModalSurface" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#EB1E2126" />
+        <GradientStop Offset="1" Color="#F014161A" />
+    </LinearGradientBrush>
+    <!--  rgba(255,255,255,0.09)  -->
+    <SolidColorBrush x:Key="ModalBorder" Color="#17FFFFFF" />
+    <!--  o fio de luz na borda de cima: box-shadow inset 0 1px 0  -->
+    <SolidColorBrush x:Key="ModalHighlight" Color="#0DFFFFFF" />
+
+    <!--  painéis laterais e rodapé: rgba(255,255,255,0.014)  -->
+    <SolidColorBrush x:Key="PanelTint" Color="#04FFFFFF" />
+    <!--  rgba(255,255,255,0.06)  -->
+    <SolidColorBrush x:Key="PanelBorder" Color="#0FFFFFFF" />
+    <!--  filete entre linhas de ajuste: rgba(255,255,255,0.055)  -->
+    <SolidColorBrush x:Key="RowLine" Color="#0EFFFFFF" />
+
+    <!--  navegação lateral  -->
+    <SolidColorBrush x:Key="NavBgHover" Color="#0DFFFFFF" />
+    <SolidColorBrush x:Key="NavBgSelected" Color="#13FFFFFF" />
+    <SolidColorBrush x:Key="NavBorderSelected" Color="#1AFFFFFF" />
+    <SolidColorBrush x:Key="NavDot" Color="#4DDBE4EC" />
+    <SolidColorBrush x:Key="NavDotSelected" Color="#DBE4EC" />
+
+    <!--  marca do Folder Hub: contraste reservado para a assinatura visual  -->
+    <SolidColorBrush x:Key="BrandBorder" Color="#1AFFFFFF" />
+    <SolidColorBrush x:Key="BrandTileStart" Color="#2B3037" />
+    <SolidColorBrush x:Key="BrandTileEnd" Color="#171A1E" />
+    <SolidColorBrush x:Key="BrandBarStrong" Color="#DBE4EC" />
+    <SolidColorBrush x:Key="BrandBar" Color="#8FDBE4EC" />
+    <SolidColorBrush x:Key="BrandBarQuiet" Color="#59EEF1F4" />
+
+    <!--
+        O branco é o destaque desta paleta: não há cor de marca, então o botão
+        que conclui é o único elemento cheio da tela.
+    -->
+    <SolidColorBrush x:Key="AccentFill" Color="#E6ECF2" />
+    <SolidColorBrush x:Key="AccentFillHover" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="AccentText" Color="#14161A" />
+
+    <!--  caixa afundada: o quadro do atalho, o do controle deslizante  -->
+    <SolidColorBrush x:Key="SunkenBg" Color="#08FFFFFF" />
+    <SolidColorBrush x:Key="SunkenBorder" Color="#12FFFFFF" />
+    <SolidColorBrush x:Key="SunkenBgStrong" Color="#0EFFFFFF" />
+    <SolidColorBrush x:Key="SunkenBorderStrong" Color="#2EFFFFFF" />
+    <!--  o contorno tracejado de "adicionar hub"  -->
+    <SolidColorBrush x:Key="DashedBorder" Color="#24FFFFFF" />
+
+    <!--  botão fantasma  -->
+    <SolidColorBrush x:Key="GhostBorder" Color="#1AFFFFFF" />
+    <SolidColorBrush x:Key="GhostText" Color="#BFEEF1F4" />
+
+    <!--  controle segmentado  -->
+    <SolidColorBrush x:Key="SegmentBg" Color="#0AFFFFFF" />
+    <SolidColorBrush x:Key="SegmentBorder" Color="#12FFFFFF" />
+    <SolidColorBrush x:Key="SegmentSelected" Color="#1AFFFFFF" />
+    <SolidColorBrush x:Key="SegmentSelectedBorder" Color="#29FFFFFF" />
+
+    <!--  etiqueta de contagem  -->
+    <SolidColorBrush x:Key="PillBg" Color="#0FFFFFFF" />
+    <SolidColorBrush x:Key="PillBorder" Color="#1AFFFFFF" />
+    <SolidColorBrush x:Key="PillBgQuiet" Color="#0DFFFFFF" />
+    <SolidColorBrush x:Key="PillBorderQuiet" Color="#14FFFFFF" />
+
+    <!--  controle deslizante  -->
+    <SolidColorBrush x:Key="TrackBg" Color="#1AFFFFFF" />
+    <SolidColorBrush x:Key="TrackFill" Color="#D9DBE4EC" />
+    <SolidColorBrush x:Key="TrackThumb" Color="#EEF1F4" />
+
+    <!--  alça de arrastar da linha de hub  -->
+    <SolidColorBrush x:Key="GripLine" Color="#59EEF1F4" />
+    <SolidColorBrush x:Key="GripLineQuiet" Color="#47EEF1F4" />
 
     <!--
         ============ FORMA ============
@@ -166,6 +249,18 @@
     <CornerRadius x:Key="RadiusMenuItem">7</CornerRadius>
     <CornerRadius x:Key="RadiusThumb">3</CornerRadius>
 
+    <!--  a configuração tem cantos bem mais largos que o hub  -->
+    <CornerRadius x:Key="RadiusModal">22</CornerRadius>
+    <CornerRadius x:Key="RadiusNav">10</CornerRadius>
+    <CornerRadius x:Key="RadiusRow">14</CornerRadius>
+    <CornerRadius x:Key="RadiusHubTile">10</CornerRadius>
+    <CornerRadius x:Key="RadiusChip">8</CornerRadius>
+    <CornerRadius x:Key="RadiusSelect">9</CornerRadius>
+    <CornerRadius x:Key="RadiusSegment">11</CornerRadius>
+    <CornerRadius x:Key="RadiusSegmentItem">8</CornerRadius>
+    <!--  metade da altura da etiqueta (22 / 2)  -->
+    <CornerRadius x:Key="RadiusPill">11</CornerRadius>
+
     <!--
         ============ TIPOGRAFIA ============
         Manrope e JetBrains Mono, embutidas em Assets/Fonts (SIL Open Font
@@ -186,6 +281,11 @@
     <sys:Double x:Key="SizeGlyph">11</sys:Double>
     <sys:Double x:Key="SizeGlyphLarge">17</sys:Double>
     <sys:Double x:Key="SizeGlyphSmall">10</sys:Double>
+
+    <!--  a configuração tem um degrau a mais entre o título e o corpo  -->
+    <sys:Double x:Key="SizeSection">13</sys:Double>
+    <sys:Double x:Key="SizeSubtle">12</sys:Double>
+    <sys:Double x:Key="SizeRowHint">11.5</sys:Double>
 
     <!--
         ============ MEDIDA ============

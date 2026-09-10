@@ -39,7 +39,9 @@ public partial class MainWindow
         }
 
         TabStrip.ItemsSource = _tabs;
-        TabRow.Visibility = _tabs.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        TabRow.Visibility = !App.Config.SingleFolder && _tabs.Count > 1
+            ? Visibility.Visible
+            : Visibility.Collapsed;
     }
 
     /// <summary>Maior aba, para a janela caber em todas sem redimensionar na troca.</summary>
@@ -58,6 +60,14 @@ public partial class MainWindow
         try
         {
             _tab = tab;
+
+            int tabIndex = _tabs.IndexOf(tab);
+            if (!App.Config.SingleFolder && App.Config.RememberLastHub && tabIndex >= 0
+                && App.Config.LastHub != tabIndex)
+            {
+                App.Config.LastHub = tabIndex;
+                App.Config.Save();
+            }
 
             // As coleções da janela passam a apontar para as da aba: assim o
             // resto do código continua trabalhando com _all e _iconCache sem
@@ -125,7 +135,9 @@ public partial class MainWindow
         tab.Count = FolderScanner.CountSupported(path);
         _tabs.Add(tab);
 
-        TabRow.Visibility = _tabs.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        TabRow.Visibility = !App.Config.SingleFolder && _tabs.Count > 1
+            ? Visibility.Visible
+            : Visibility.Collapsed;
         PersistTabs();
 
         ActivateTab(tab, resize: true, animate: true);
@@ -138,7 +150,9 @@ public partial class MainWindow
 
         int index = _tabs.IndexOf(tab);
         _tabs.Remove(tab);
-        TabRow.Visibility = _tabs.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        TabRow.Visibility = !App.Config.SingleFolder && _tabs.Count > 1
+            ? Visibility.Visible
+            : Visibility.Collapsed;
         PersistTabs();
 
         if (ReferenceEquals(tab, _tab))

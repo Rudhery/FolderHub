@@ -98,7 +98,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="{StaticResource RadiusKey}">
+                            CornerRadius="{TemplateBinding Radius}">
                         <TextBlock HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
                                    FontFamily="{TemplateBinding FontFamily}"
@@ -228,8 +228,13 @@
                                     Margin="{TemplateBinding Padding}"
                                     VerticalAlignment="Top"
                                     Visibility="Collapsed">
-                            <Grid Width="{StaticResource TileSize}"
-                                  Height="{StaticResource TileSize}"
+                            <!--
+                                Dinâmico porque a densidade dos cards reescreve
+                                TileSize em tempo de execução, e StaticResource
+                                resolveria uma vez só.
+                            -->
+                            <Grid Width="{DynamicResource TileSize}"
+                                  Height="{DynamicResource TileSize}"
                                   HorizontalAlignment="Center">
                                 <Border x:Name="TileBase"
                                         Background="{StaticResource TileBg}"
@@ -511,6 +516,29 @@
         </Grid>
     </ControlTemplate>
 
+    <!--
+        A mesma barra flutuante, mas por dentro. A do hub sai para o respiro da
+        janela porque lá ela encostaria na última coluna de cards; aqui fora
+        seria fora do modal, em cima da sombra.
+    -->
+    <ControlTemplate x:Key="InsetScrollViewer" TargetType="ScrollViewer">
+        <Grid>
+            <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
+                                    Margin="{TemplateBinding Padding}"
+                                    CanContentScroll="{TemplateBinding CanContentScroll}"
+                                    Content="{TemplateBinding Content}"
+                                    ContentTemplate="{TemplateBinding ContentTemplate}" />
+            <ScrollBar x:Name="PART_VerticalScrollBar"
+                       HorizontalAlignment="Right"
+                       Style="{StaticResource ThinScrollBar}"
+                       Maximum="{TemplateBinding ScrollableHeight}"
+                       Orientation="Vertical"
+                       ViewportSize="{TemplateBinding ViewportHeight}"
+                       Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
+                       Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" />
+        </Grid>
+    </ControlTemplate>
+
     <!--  a lista sem cromo: só a grade e a barra flutuante  -->
     <Style x:Key="BareListBox" TargetType="ListBox">
         <Setter Property="Background" Value="Transparent" />
@@ -539,7 +567,7 @@
         senão a cor chega antes e o movimento parece atrasado.
     -->
     <Style TargetType="{x:Type hub:HubToggle}">
-        <Setter Property="Width" Value="38" />
+        <Setter Property="Width" Value="40" />
         <Setter Property="Height" Value="22" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Focusable" Value="False" />
@@ -559,12 +587,12 @@
                                 CornerRadius="11"
                                 Opacity="0" />
                         <Border x:Name="Knob"
-                                Width="14"
-                                Height="14"
-                                Margin="4,0,0,0"
+                                Width="16"
+                                Height="16"
+                                Margin="3,0,0,0"
                                 HorizontalAlignment="Left"
                                 Background="{StaticResource ToggleKnob}"
-                                CornerRadius="7">
+                                CornerRadius="8">
                             <Border.RenderTransform>
                                 <TranslateTransform x:Name="Slide" />
                             </Border.RenderTransform>
@@ -581,8 +609,8 @@
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="Slide"
                                                          Storyboard.TargetProperty="X"
-                                                         To="16"
-                                                         Duration="{x:Static hub:HubMotion.State}">
+                                                         To="18"
+                                                       Duration="{x:Static hub:HubMotion.State}">
                                             <DoubleAnimation.EasingFunction>
                                                 <CubicEase EasingMode="EaseOut" />
                                             </DoubleAnimation.EasingFunction>
@@ -590,7 +618,7 @@
                                         <DoubleAnimation Storyboard.TargetName="TrackOn"
                                                          Storyboard.TargetProperty="Opacity"
                                                          To="1"
-                                                         Duration="{x:Static hub:HubMotion.State}" />
+                                                       Duration="{x:Static hub:HubMotion.State}" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
@@ -600,7 +628,7 @@
                                         <DoubleAnimation Storyboard.TargetName="Slide"
                                                          Storyboard.TargetProperty="X"
                                                          To="0"
-                                                         Duration="{x:Static hub:HubMotion.State}">
+                                                       Duration="{x:Static hub:HubMotion.State}">
                                             <DoubleAnimation.EasingFunction>
                                                 <CubicEase EasingMode="EaseOut" />
                                             </DoubleAnimation.EasingFunction>
@@ -608,7 +636,7 @@
                                         <DoubleAnimation Storyboard.TargetName="TrackOn"
                                                          Storyboard.TargetProperty="Opacity"
                                                          To="0"
-                                                         Duration="{x:Static hub:HubMotion.State}" />
+                                                       Duration="{x:Static hub:HubMotion.State}" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
@@ -622,38 +650,45 @@
         </Setter>
     </Style>
 
-    <!--  ============ LINHA DE CONFIGURAÇÃO ============  -->
+    <!--
+        ============ LINHA DE AJUSTE ============
+        Rótulo e explicação à esquerda, controle à direita, com um filete
+        embaixo. As linhas se empilham dentro de um HubGroup, que desenha o
+        filete que falta em cima da primeira.
+    -->
     <Style TargetType="{x:Type hub:HubOption}">
-        <Setter Property="Padding" Value="0,10" />
+        <Setter Property="Padding" Value="0,15" />
         <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
         <Setter Property="HorizontalContentAlignment" Value="Right" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type hub:HubOption}">
-                    <Grid Margin="{TemplateBinding Padding}" Background="Transparent">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+                    <Border BorderBrush="{StaticResource RowLine}" BorderThickness="0,0,0,1">
+                        <Grid Margin="{TemplateBinding Padding}" Background="Transparent">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                        <StackPanel Grid.Column="0"
-                                    Margin="0,0,16,0"
-                                    VerticalAlignment="Center">
-                            <TextBlock FontSize="{StaticResource SizeBody}"
-                                       FontWeight="Medium"
-                                       Foreground="{StaticResource TextLabel}"
-                                       Text="{TemplateBinding Title}"
-                                       TextWrapping="Wrap" />
-                            <TextBlock x:Name="Explain"
-                                       Margin="0,3,0,0"
-                                       FontSize="{StaticResource SizeHint}"
-                                       Foreground="{StaticResource TextFaint}"
-                                       Text="{TemplateBinding Description}"
-                                       TextWrapping="Wrap" />
-                        </StackPanel>
+                            <StackPanel Grid.Column="0"
+                                        Margin="0,0,20,0"
+                                        VerticalAlignment="Center">
+                                <TextBlock FontSize="{StaticResource SizeBody}"
+                                           FontWeight="Medium"
+                                           Foreground="{StaticResource TextLabel}"
+                                           Text="{TemplateBinding Title}"
+                                           TextWrapping="Wrap" />
+                                <TextBlock x:Name="Explain"
+                                           Margin="0,2,0,0"
+                                           FontSize="{StaticResource SizeRowHint}"
+                                           Foreground="{StaticResource TextMeta}"
+                                           Text="{TemplateBinding Description}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
 
-                        <ContentPresenter Grid.Column="1" VerticalAlignment="Center" />
-                    </Grid>
+                            <ContentPresenter Grid.Column="1" VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
                     <ControlTemplate.Triggers>
                         <!--  sem explicação a linha não deve deixar um vão embaixo do título  -->
                         <Trigger Property="Description" Value="{x:Null}">
@@ -661,6 +696,73 @@
                         </Trigger>
                         <Trigger Property="Description" Value="">
                             <Setter TargetName="Explain" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <!--
+                            Desligada, a linha inteira apaga junto — inclusive a
+                            explicação, senão o texto de um ajuste indisponível
+                            teria o mesmo peso do de um que funciona.
+                        -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  ============ BLOCO DE AJUSTES ============  -->
+    <Style TargetType="{x:Type hub:HubGroup}">
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type hub:HubGroup}">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock FontSize="{StaticResource SizeSection}"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimary}"
+                                           Text="{TemplateBinding Title}" />
+                                <TextBlock x:Name="Explain"
+                                           Margin="0,3,0,0"
+                                           FontSize="{StaticResource SizeSubtle}"
+                                           Foreground="{StaticResource TextMuted}"
+                                           Text="{TemplateBinding Description}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+
+                            <TextBlock x:Name="Count"
+                                       Grid.Column="1"
+                                       Margin="16,0,0,0"
+                                       VerticalAlignment="Bottom"
+                                       FontFamily="{StaticResource MonoFont}"
+                                       FontSize="{StaticResource SizeHint}"
+                                       Foreground="{StaticResource TextMeta}"
+                                       Text="{TemplateBinding Aside}" />
+                        </Grid>
+
+                        <Border x:Name="Rule"
+                                BorderBrush="{StaticResource RowLine}"
+                                BorderThickness="0,1,0,0">
+                            <ContentPresenter />
+                        </Border>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Description" Value="{x:Null}">
+                            <Setter TargetName="Explain" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Aside" Value="{x:Null}">
+                            <Setter TargetName="Count" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Ruled" Value="False">
+                            <Setter TargetName="Rule" Property="BorderThickness" Value="0" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -829,8 +931,8 @@
     </Style>
 
     <Style x:Key="HubSelect" TargetType="ComboBox">
-        <Setter Property="Height" Value="30" />
-        <Setter Property="MinWidth" Value="168" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="MinWidth" Value="150" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Focusable" Value="False" />
         <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
@@ -849,10 +951,10 @@
                                 <ControlTemplate TargetType="ToggleButton">
                                     <Border x:Name="Frame"
                                             Padding="12,0"
-                                            Background="{StaticResource ControlBg}"
-                                            BorderBrush="{StaticResource ControlBorder}"
+                                            Background="{StaticResource SunkenBgStrong}"
+                                            BorderBrush="{StaticResource GhostBorder}"
                                             BorderThickness="1"
-                                            CornerRadius="{StaticResource RadiusControl}">
+                                            CornerRadius="{StaticResource RadiusSelect}">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
@@ -929,6 +1031,370 @@
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="Fill" Property="Background" Value="{StaticResource CardBg}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        ============ BOTÃO FANTASMA ============
+        Só contorno. É o botão de ação secundária da configuração.
+    -->
+    <Style x:Key="GhostButton" TargetType="Button">
+        <Setter Property="Padding" Value="13,7" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        <Setter Property="FontSize" Value="{StaticResource SizeSubtle}" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Foreground" Value="{StaticResource GhostText}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Fill"
+                            Padding="{TemplateBinding Padding}"
+                            Background="Transparent"
+                            BorderBrush="{StaticResource GhostBorder}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusSelect}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Fill" Property="Background" Value="{StaticResource ControlBgHover}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        ============ BOTÃO DE DESTAQUE ============
+        O único elemento cheio da tela. Numa paleta sem cor de marca, o branco
+        é o destaque — por isso ele carrega texto escuro.
+    -->
+    <Style x:Key="AccentButton" TargetType="Button">
+        <Setter Property="Padding" Value="16,8" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        <Setter Property="FontSize" Value="{StaticResource SizeSubtle}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource AccentText}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Fill"
+                            Padding="{TemplateBinding Padding}"
+                            Background="{StaticResource AccentFill}"
+                            CornerRadius="{StaticResource RadiusNav}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Fill" Property="Background" Value="{StaticResource AccentFillHover}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        ============ CONTROLE SEGMENTADO ============
+        Escolha entre três ou quatro opções curtas, todas visíveis. Preferido a
+        um seletor quando as opções cabem: não esconde as alternativas atrás de
+        um clique.
+    -->
+    <Style x:Key="SegmentItem" TargetType="ListBoxItem">
+        <Setter Property="Padding" Value="14,7" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Margin" Value="0,0,4,0" />
+        <Setter Property="FontSize" Value="{StaticResource SizeSubtle}" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Foreground" Value="{StaticResource TextMuted}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="Fill"
+                            Padding="{TemplateBinding Padding}"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusSegmentItem}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="{StaticResource TextLabel}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Fill" Property="Background" Value="{StaticResource SegmentSelected}" />
+                            <Setter TargetName="Fill" Property="BorderBrush" Value="{StaticResource SegmentSelectedBorder}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextStrong}" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Segment" TargetType="ListBox">
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="ItemContainerStyle" Value="{StaticResource SegmentItem}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBox">
+                    <Border Padding="{TemplateBinding Padding}"
+                            Background="{StaticResource SegmentBg}"
+                            BorderBrush="{StaticResource SegmentBorder}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusSegment}">
+                        <ItemsPresenter />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <!--  o último item não deve carregar a margem da direita  -->
+                    <StackPanel Margin="0,0,-4,0" Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        ============ CONTROLE DESLIZANTE ============
+        Trilho de 4px, alça de 14px. O trecho já percorrido acende, para que o
+        valor seja legível sem olhar o número.
+    -->
+    <Style x:Key="SliderThumb" TargetType="Thumb">
+        <Setter Property="Width" Value="14" />
+        <Setter Property="Height" Value="14" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Border Background="{StaticResource TrackThumb}" CornerRadius="7">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="6" Opacity="0.6" ShadowDepth="2" Color="Black" />
+                        </Border.Effect>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="HubSlider" TargetType="Slider">
+        <Setter Property="Height" Value="14" />
+        <Setter Property="MinWidth" Value="120" />
+        <Setter Property="IsMoveToPointEnabled" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Slider">
+                    <Grid VerticalAlignment="Center">
+                        <Border Height="4"
+                                VerticalAlignment="Center"
+                                Background="{StaticResource TrackBg}"
+                                CornerRadius="2" />
+                        <Track x:Name="PART_Track">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="Slider.DecreaseLarge" Focusable="False">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Border Height="4"
+                                                    VerticalAlignment="Center"
+                                                    Background="{StaticResource TrackFill}"
+                                                    CornerRadius="2" />
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
+                            </Track.DecreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource SliderThumb}" />
+                            </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="Slider.IncreaseLarge" Focusable="False">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Border Background="Transparent" />
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        ============ CARTÃO DE ESCOLHA ============
+        Duas opções que mudam como o app inteiro se comporta merecem mais que
+        uma linha de lista: cada uma explica o que faz.
+    -->
+    <Style x:Key="ChoiceCard" TargetType="RadioButton">
+        <Setter Property="Padding" Value="16" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Fill"
+                            Padding="{TemplateBinding Padding}"
+                            Background="{StaticResource CardBg}"
+                            BorderBrush="{StaticResource CardBorder}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusRow}">
+                        <StackPanel>
+                            <StackPanel hub:HubSpacing.Gap="Small" Orientation="Horizontal">
+                                <Grid Width="15" Height="15" VerticalAlignment="Center">
+                                    <Ellipse x:Name="Ring"
+                                             Stroke="{StaticResource CardBorderSelected}"
+                                             StrokeThickness="1.5" />
+                                    <Ellipse x:Name="Dot"
+                                             Width="7"
+                                             Height="7"
+                                             Fill="{StaticResource GlyphSelected}"
+                                             Opacity="0" />
+                                </Grid>
+                                <TextBlock x:Name="Caption"
+                                           VerticalAlignment="Center"
+                                           FontSize="{StaticResource SizeBody}"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextLabel}"
+                                           Text="{TemplateBinding Tag}" />
+                            </StackPanel>
+                            <ContentPresenter Margin="0,8,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Fill" Property="Background" Value="{StaticResource CardBgHover}" />
+                            <Setter TargetName="Fill" Property="BorderBrush" Value="{StaticResource CardBorderHover}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Fill" Property="Background" Value="{StaticResource CardBgSelected}" />
+                            <Setter TargetName="Fill" Property="BorderBrush" Value="{StaticResource CardBorderSelected}" />
+                            <Setter TargetName="Dot" Property="Opacity" Value="1" />
+                            <Setter TargetName="Ring" Property="Stroke" Value="{StaticResource GlyphSelected}" />
+                            <Setter TargetName="Caption" Property="Foreground" Value="{StaticResource TextStrong}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  a explicação de dentro do cartão de escolha  -->
+    <Style x:Key="ChoiceCardText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{StaticResource SizeSubtle}" />
+        <Setter Property="Foreground" Value="{StaticResource TextMuted}" />
+        <Setter Property="LineHeight" Value="18" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <!--
+        ============ NOME EDITÁVEL NA LINHA ============
+        No design o nome do hub é texto puro. Ele é editável, mas mostrar uma
+        caixa de campo em cada linha encheria a lista de molduras — então a
+        moldura só aparece quando o ponteiro chega ou o foco entra.
+    -->
+    <Style x:Key="InlineName" TargetType="TextBox">
+        <Setter Property="Padding" Value="6,3" />
+        <Setter Property="Margin" Value="-6,-3,0,0" />
+        <Setter Property="Foreground" Value="{StaticResource TextStrong}" />
+        <Setter Property="CaretBrush" Value="{StaticResource TextPrimary}" />
+        <Setter Property="SelectionBrush" Value="{StaticResource SelectionFill}" />
+        <Setter Property="SelectionOpacity" Value="0.35" />
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        <Setter Property="FontSize" Value="{StaticResource SizeBody}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="Frame"
+                            Padding="{TemplateBinding Padding}"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusMenuItem}">
+                        <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Frame" Property="Background" Value="{StaticResource SunkenBg}" />
+                            <Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource SunkenBorder}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Frame" Property="Background" Value="{StaticResource SunkenBgStrong}" />
+                            <Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource CardBorderSelected}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        ============ BOTÃO TRACEJADO ============
+        O convite para acrescentar. Tracejado porque ele ocupa o lugar de uma
+        linha que ainda não existe, e não deve pesar como as que existem.
+    -->
+    <Style x:Key="DashedButton" TargetType="Button">
+        <Setter Property="Height" Value="48" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        <Setter Property="FontSize" Value="{StaticResource SizeBody}" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Foreground" Value="{StaticResource TextMuted}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Fill"
+                            Background="Transparent"
+                            BorderBrush="{StaticResource DashedBorder}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusRow}">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Orientation="Horizontal">
+                            <TextBlock Margin="0,0,9,0"
+                                       VerticalAlignment="Center"
+                                       FontSize="{StaticResource SizeTitle}"
+                                       Foreground="{StaticResource TextMeta}"
+                                       Text="+" />
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Fill" Property="Background" Value="{StaticResource SunkenBg}" />
+                            <Setter TargetName="Fill" Property="BorderBrush" Value="{StaticResource SunkenBorderStrong}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextLabel}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

@@ -33,4 +33,20 @@ public class HubKey : Control
         get => (string)GetValue(TextProperty);
         set => SetValue(TextProperty, value);
     }
+
+    /// <summary>
+    /// O arredondamento. Existe como propriedade porque a mesma tecla aparece
+    /// em dois tamanhos: pequena nas dicas do hub, e maior na configuração,
+    /// onde ela mostra o atalho global e é o elemento principal da linha.
+    /// </summary>
+    public static readonly DependencyProperty RadiusProperty =
+        DependencyProperty.Register(
+            nameof(Radius), typeof(CornerRadius), typeof(HubKey),
+            new FrameworkPropertyMetadata(new CornerRadius(6)));
+
+    public CornerRadius Radius
+    {
+        get => (CornerRadius)GetValue(RadiusProperty);
+        set => SetValue(RadiusProperty, value);
+    }
 }

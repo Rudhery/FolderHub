@@ -20,8 +20,8 @@
             mostra de cada atalho. A entrada escalonada precisa do Loaded.
         -->
         <Style x:Key="AppCard" TargetType="{x:Type hub:HubCard}" BasedOn="{StaticResource {x:Type hub:HubCard}}">
-            <Setter Property="Width" Value="{StaticResource CardWidth}" />
-            <Setter Property="Height" Value="{StaticResource CardHeight}" />
+            <Setter Property="Width" Value="{DynamicResource CardWidth}" />
+            <Setter Property="Height" Value="{DynamicResource CardHeight}" />
             <!--  5 de cada lado = os 10px de vão do design  -->
             <Setter Property="Margin" Value="5" />
             <!--  medida do desenho, não da escala  -->
@@ -81,7 +81,7 @@
     <!--  ================= JANELA =================  -->
     <Border x:Name="Shell"
             Padding="24,22,24,18"
-            Background="{StaticResource Surface}"
+            Background="{DynamicResource Surface}"
             BorderBrush="{StaticResource SurfaceBorder}"
             BorderThickness="1"
             CornerRadius="{StaticResource RadiusWindow}"

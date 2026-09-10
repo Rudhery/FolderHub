@@ -4,365 +4,765 @@
         xmlns:hub="clr-namespace:FolderHub.Controls"
         xmlns:views="clr-namespace:FolderHub.Views"
         Title="Configuração — FolderHub"
-        Width="760"
-        Height="566"
+        Width="960"
+        Height="824"
+        Background="Transparent"
         ShowInTaskbar="False">
 
     <Window.Resources>
-        <!--  a navegação lateral é o HubCard discreto, com o conteúdo deitado  -->
-        <Style x:Key="NavItem" TargetType="{x:Type hub:HubCard}" BasedOn="{StaticResource {x:Type hub:HubCard}}">
-            <Setter Property="Variant" Value="Quiet" />
-            <Setter Property="Height" Value="34" />
-            <Setter Property="Margin" Value="0,0,0,2" />
-            <Setter Property="Padding" Value="10,0" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <!--
+            Item da navegação lateral. Um ponto de 5px em vez de ícone: com
+            cinco entradas de uma palavra, o ícone não ajuda a distinguir e
+            rouba o espaço do rótulo.
+        -->
+        <Style x:Key="NavItem" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="11,9" />
+            <Setter Property="Margin" Value="0,0,0,3" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Fill"
+                                Padding="{TemplateBinding Padding}"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource RadiusNav}">
+                            <StackPanel hub:HubSpacing.Gap="Small" Orientation="Horizontal">
+                                <Ellipse x:Name="Dot"
+                                         Width="5"
+                                         Height="5"
+                                         VerticalAlignment="Center"
+                                         Fill="{StaticResource NavDot}" />
+                                <TextBlock x:Name="Caption"
+                                           VerticalAlignment="Center"
+                                           FontSize="{StaticResource SizeBody}"
+                                           FontWeight="Medium"
+                                           Foreground="{StaticResource TabLabel}"
+                                           Text="{Binding Name}" />
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Fill" Property="Background" Value="{StaticResource NavBgHover}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Fill" Property="Background" Value="{StaticResource NavBgSelected}" />
+                                <Setter TargetName="Fill" Property="BorderBrush" Value="{StaticResource NavBorderSelected}" />
+                                <Setter TargetName="Dot" Property="Fill" Value="{StaticResource NavDotSelected}" />
+                                <Setter TargetName="Caption" Property="Foreground" Value="{StaticResource TextStrong}" />
+                                <Setter TargetName="Caption" Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--  a tecla desenhada da configuração é maior que a das dicas do hub  -->
+        <Style x:Key="BigKey" TargetType="{x:Type hub:HubKey}" BasedOn="{StaticResource {x:Type hub:HubKey}}">
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="FontSize" Value="{StaticResource SizeRowHint}" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+            <Setter Property="Radius" Value="{StaticResource RadiusChip}" />
+        </Style>
+
+        <Style x:Key="KeyPlus" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="6,0" />
+            <Setter Property="FontSize" Value="{StaticResource SizeHint}" />
+            <Setter Property="Foreground" Value="{StaticResource TextFaint}" />
+            <Setter Property="Text" Value="+" />
+        </Style>
+
+        <!--  o quadro afundado que hospeda o atalho e o controle deslizante  -->
+        <Style x:Key="SunkenBox" TargetType="Border">
+            <Setter Property="Padding" Value="16" />
+            <Setter Property="Background" Value="{StaticResource SunkenBg}" />
+            <Setter Property="BorderBrush" Value="{StaticResource SunkenBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusRow}" />
+        </Style>
+
+        <Style x:Key="MonoValue" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+            <Setter Property="FontSize" Value="{StaticResource SizeMeta}" />
+            <Setter Property="Foreground" Value="{StaticResource TextMuted}" />
+            <Setter Property="MaxWidth" Value="280" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
         </Style>
     </Window.Resources>
 
+    <!--
+        ================= MODAL =================
+        A barra lateral e o rodapé arredondam os próprios cantos em vez de
+        serem recortados pela casca: um Border do WPF não recorta os filhos
+        pela forma arredondada, só pelo retângulo.
+    -->
     <Border x:Name="Shell"
-            Background="{StaticResource Surface}"
-            BorderBrush="{StaticResource SurfaceBorder}"
+            Margin="0"
+            Background="{DynamicResource Surface}"
+            BorderBrush="{StaticResource ModalBorder}"
             BorderThickness="1"
             CornerRadius="{StaticResource RadiusWindow}"
             Opacity="0">
+        <!--  a margem existe para a sombra ter onde cair  -->
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="60"
+                              Direction="270"
+                              Opacity="0.8"
+                              ShadowDepth="16"
+                              Color="Black" />
+        </Border.Effect>
         <Border.RenderTransform>
             <TranslateTransform x:Name="ShellLift" Y="8" />
         </Border.RenderTransform>
 
         <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="208" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-            <!--  ============ CABEÇALHO ============  -->
-            <Grid x:Name="Header"
-                  Grid.Row="0"
-                  Margin="24,22,24,0"
-                  Background="Transparent"
-                  MouseLeftButtonDown="Header_MouseLeftButtonDown">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+            <!--  ============ NAVEGAÇÃO ============  -->
+            <Border x:Name="Sidebar"
+                    Grid.Column="0"
+                    Padding="16,24"
+                    Background="{StaticResource PanelTint}"
+                    BorderBrush="{StaticResource PanelBorder}"
+                    BorderThickness="0,0,1,0"
+                    CornerRadius="8,0,0,8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock FontSize="{StaticResource SizeTitle}"
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource TextPrimary}"
-                               Text="Configuração" />
-                    <TextBlock Margin="0,3,0,0"
-                               FontSize="{StaticResource SizeBody}"
-                               Foreground="{StaticResource TextFaint}"
-                               Text="Tudo vale na hora — não precisa reiniciar o hub." />
-                </StackPanel>
-
-                <hub:HubIconButton Grid.Column="1"
-                                   VerticalAlignment="Center"
-                                   Click="Close_Click"
-                                   Glyph="Close"
-                                   ToolTip="Fechar (Esc)" />
-            </Grid>
-
-            <!--  ============ CORPO ============  -->
-            <Grid Grid.Row="1" Margin="24,18,24,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="176" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <hub:HubCardList x:Name="Sections"
-                                 Grid.Column="0"
-                                 VerticalAlignment="Top"
-                                 Style="{StaticResource BareListBox}"
-                                 ItemContainerStyle="{StaticResource NavItem}"
-                                 SelectionChanged="Sections_SelectionChanged">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel VerticalAlignment="Center"
-                                        hub:HubSpacing.Gap="Medium"
-                                        Orientation="Horizontal">
-                                <hub:HubIcon FontSize="{StaticResource SizeGlyph}" Glyph="{Binding Glyph}" />
-                                <TextBlock VerticalAlignment="Center"
-                                           FontSize="{StaticResource SizeBody}"
-                                           FontWeight="Medium"
-                                           Text="{Binding Name}" />
+                    <!--  a marca: as três linhas do ícone do app  -->
+                    <StackPanel Grid.Row="0"
+                                Margin="8,0,0,26"
+                                hub:HubSpacing.Gap="Small"
+                                Background="Transparent"
+                                MouseLeftButtonDown="Header_MouseLeftButtonDown"
+                                Orientation="Horizontal">
+                        <Border Width="22"
+                                Height="22"
+                                Padding="4.5"
+                                VerticalAlignment="Center"
+                                BorderBrush="{StaticResource BrandBorder}"
+                                BorderThickness="1"
+                                CornerRadius="6">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0.85,1">
+                                    <GradientStop Offset="0" Color="{Binding Source={StaticResource BrandTileStart}, Path=Color}" />
+                                    <GradientStop Offset="1" Color="{Binding Source={StaticResource BrandTileEnd}, Path=Color}" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <StackPanel VerticalAlignment="Center" hub:HubSpacing.Gap="None">
+                                <Border Height="2.5"
+                                        Margin="0,0,0,2.5"
+                                        Background="{StaticResource BrandBarStrong}"
+                                        CornerRadius="1.5" />
+                                <Border Height="2.5"
+                                        Margin="0,0,3.5,2.5"
+                                        Background="{StaticResource BrandBar}"
+                                        CornerRadius="1.5" />
+                                <Border Height="2.5"
+                                        Margin="0,0,7,0"
+                                        Background="{StaticResource BrandBarQuiet}"
+                                        CornerRadius="1.5" />
                             </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </hub:HubCardList>
+                        </Border>
+                        <TextBlock VerticalAlignment="Center"
+                                   FontSize="{StaticResource SizeSection}"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimary}"
+                                   Text="Folder Hub" />
+                    </StackPanel>
 
-                <Border Grid.Column="1"
-                        Margin="20,0,0,0"
-                        Padding="20,0,0,0"
-                        BorderBrush="{StaticResource Divider}"
-                        BorderThickness="1,0,0,0">
-                    <ScrollViewer Padding="0,0,0,8"
-                                  Focusable="False"
-                                  HorizontalScrollBarVisibility="Disabled"
-                                  Template="{StaticResource OverlayScrollViewer}"
-                                  VerticalScrollBarVisibility="Auto">
-                        <Grid>
+                    <ListBox x:Name="Sections"
+                             Grid.Row="1"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Focusable="False"
+                             ItemContainerStyle="{StaticResource NavItem}"
+                             SelectionChanged="Sections_SelectionChanged" />
 
-                            <!--  ============ HUBS ============  -->
-                            <StackPanel x:Name="PageHubs">
-                                <TextBlock Foreground="{StaticResource TextFaint}"
-                                           FontSize="{StaticResource SizeHint}"
-                                           Text="Cada hub é uma pasta. O que estiver dentro dela vira card — não há lista de programas em lugar nenhum."
-                                           TextWrapping="Wrap" />
+                    <StackPanel Grid.Row="3" Margin="11,0,11,0">
+                        <TextBlock x:Name="SidebarVersion"
+                                   FontFamily="{StaticResource MonoFont}"
+                                   FontSize="{StaticResource SizeMeta}"
+                                   Foreground="{StaticResource TextMeta}" />
+                        <TextBlock Margin="0,6,0,0"
+                                   FontSize="{StaticResource SizeRowHint}"
+                                   Foreground="{StaticResource TextMeta}"
+                                   Text="Tudo salvo localmente" />
+                    </StackPanel>
+                </Grid>
+            </Border>
 
-                                <ItemsControl x:Name="HubList" Margin="0,14,0,0">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Margin="0,0,0,8"
-                                                    Padding="12,10"
-                                                    Background="{StaticResource CardBg}"
-                                                    BorderBrush="{StaticResource CardBorder}"
-                                                    BorderThickness="1"
-                                                    CornerRadius="{StaticResource RadiusQuiet}">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
+            <!--  ============ CONTEÚDO ============  -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                                                    <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                                                        <TextBox MaxLength="40"
-                                                                 Style="{StaticResource HubTextBox}"
-                                                                 KeyDown="HubName_KeyDown"
-                                                                 LostFocus="HubName_LostFocus"
-                                                                 Tag="{Binding}"
-                                                                 Text="{Binding Name, Mode=OneTime}" />
-                                                        <TextBlock Margin="2,6,0,0"
+                <Border x:Name="Header"
+                        Grid.Row="0"
+                        Padding="26,20"
+                        Background="Transparent"
+                        BorderBrush="{StaticResource PanelBorder}"
+                        BorderThickness="0,0,0,1"
+                        MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock x:Name="PageTitle"
+                                       FontSize="{StaticResource SizeTitle}"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimary}" />
+                            <TextBlock x:Name="PageSubtitle"
+                                       Margin="0,2,0,0"
+                                       FontSize="{StaticResource SizeSubtle}"
+                                       Foreground="{StaticResource TextMeta}" />
+                        </StackPanel>
+
+                        <hub:HubIconButton Grid.Column="1"
+                                           Width="26"
+                                           Height="26"
+                                           VerticalAlignment="Center"
+                                           Click="Close_Click"
+                                           FontSize="{StaticResource SizeSubtle}"
+                                           Glyph="Close"
+                                           ToolTip="Fechar (Esc)" />
+                    </Grid>
+                </Border>
+
+                <ScrollViewer Grid.Row="1"
+                              Padding="26"
+                              Focusable="False"
+                              HorizontalScrollBarVisibility="Disabled"
+                              Template="{StaticResource InsetScrollViewer}"
+                              VerticalScrollBarVisibility="Auto">
+                    <Grid>
+
+                        <!--  ==================== HUBS ====================  -->
+                        <StackPanel x:Name="PageHubs" hub:HubSpacing.Gap="XXLarge">
+
+                            <hub:HubGroup Title="Modo de trabalho"
+                                          Description="Um único hub sempre à mão, ou vários hubs alternáveis dentro do modal."
+                                          Ruled="False">
+                                <UniformGrid Columns="2" Rows="1">
+                                    <RadioButton x:Name="ModeSingle"
+                                                 Margin="0,0,5,0"
+                                                 Style="{StaticResource ChoiceCard}"
+                                                 Checked="Mode_Changed"
+                                                 GroupName="Mode"
+                                                 Tag="Pasta única">
+                                        <TextBlock Style="{StaticResource ChoiceCardText}" Text="O modal abre sempre na mesma pasta. Zero navegação." />
+                                    </RadioButton>
+                                    <RadioButton x:Name="ModeMulti"
+                                                 Margin="5,0,0,0"
+                                                 Style="{StaticResource ChoiceCard}"
+                                                 Checked="Mode_Changed"
+                                                 GroupName="Mode"
+                                                 Tag="Multi hubs">
+                                        <TextBlock Style="{StaticResource ChoiceCardText}" Text="Vários hubs, um por contexto. Alterna por abas ou por Tab." />
+                                    </RadioButton>
+                                </UniformGrid>
+                            </hub:HubGroup>
+
+                            <hub:HubGroup x:Name="HubsGroup"
+                                          Title="Seus hubs"
+                                          Description="Arraste pela alça para reordenar. A ordem define as abas do modal."
+                                          Ruled="False">
+                                <StackPanel>
+                                    <ItemsControl x:Name="HubList">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Margin="0,0,0,8"
+                                                        Padding="16,14"
+                                                        Background="{StaticResource CardBg}"
+                                                        BorderBrush="{StaticResource CardBorder}"
+                                                        BorderThickness="1"
+                                                        AllowDrop="True"
+                                                        CornerRadius="{StaticResource RadiusRow}"
+                                                        DragOver="HubRow_DragOver"
+                                                        Drop="HubRow_Drop"
+                                                        Tag="{Binding}">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <!--  alça: três filetes, como no design  -->
+                                                        <StackPanel Grid.Column="0"
+                                                                    Width="10"
+                                                                    Margin="0,0,14,0"
+                                                                    VerticalAlignment="Center"
+                                                                    Background="Transparent"
+                                                                    Cursor="SizeAll"
+                                                                    MouseLeftButtonDown="Grip_MouseLeftButtonDown"
+                                                                    MouseMove="Grip_MouseMove"
+                                                                    Tag="{Binding}"
+                                                                    ToolTip="Arraste para reordenar">
+                                                            <Border Height="1.5"
+                                                                    Margin="0,0,0,3"
+                                                                    Background="{StaticResource GripLineQuiet}"
+                                                                    CornerRadius="1" />
+                                                            <Border Height="1.5"
+                                                                    Margin="0,0,0,3"
+                                                                    Background="{StaticResource GripLineQuiet}"
+                                                                    CornerRadius="1" />
+                                                            <Border Height="1.5"
+                                                                    Background="{StaticResource GripLineQuiet}"
+                                                                    CornerRadius="1" />
+                                                        </StackPanel>
+
+                                                        <Border Grid.Column="1"
+                                                                Width="34"
+                                                                Height="34"
+                                                                Margin="0,0,14,0"
+                                                                VerticalAlignment="Center"
+                                                                Background="{StaticResource TileBg}"
+                                                                BorderBrush="{StaticResource TileBorder}"
+                                                                BorderThickness="1"
+                                                                CornerRadius="{StaticResource RadiusHubTile}">
+                                                            <Border Width="13"
+                                                                    Height="13"
+                                                                    Background="{StaticResource GlyphSelected}"
+                                                                    CornerRadius="3" />
+                                                        </Border>
+
+                                                        <StackPanel Grid.Column="2"
+                                                                    Margin="0,0,14,0"
+                                                                    VerticalAlignment="Center">
+                                                            <TextBox MaxLength="40"
+                                                                     Style="{StaticResource InlineName}"
+                                                                     KeyDown="HubName_KeyDown"
+                                                                     LostFocus="HubName_LostFocus"
+                                                                     Tag="{Binding}"
+                                                                     Text="{Binding Name, Mode=OneTime}" />
+                                                            <TextBlock Margin="2,2,0,0"
+                                                                       FontFamily="{StaticResource MonoFont}"
+                                                                       FontSize="{StaticResource SizeMeta}"
+                                                                       Foreground="{StaticResource TextMeta}"
+                                                                       Text="{Binding ShortPath}"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       ToolTip="{Binding Path}" />
+                                                        </StackPanel>
+
+                                                        <Border Grid.Column="3"
+                                                                Margin="0,0,12,0"
+                                                                Padding="9,4"
+                                                                VerticalAlignment="Center"
+                                                                Background="{StaticResource PillBg}"
+                                                                BorderBrush="{StaticResource PillBorder}"
+                                                                BorderThickness="1"
+                                                                CornerRadius="{StaticResource RadiusPill}">
+                                                            <TextBlock FontFamily="{StaticResource MonoFont}"
+                                                                       FontSize="{StaticResource SizeMeta}"
+                                                                       Foreground="{StaticResource TabLabel}"
+                                                                       Text="{Binding Count, StringFormat={}{0} atalhos}" />
+                                                        </Border>
+
+                                                        <TextBlock Grid.Column="4"
+                                                                   Margin="0,0,12,0"
+                                                                   VerticalAlignment="Center"
                                                                    FontFamily="{StaticResource MonoFont}"
-                                                                   FontSize="{StaticResource SizeKey}"
-                                                                   Foreground="{StaticResource TextFaint}"
-                                                                   Text="{Binding Path}"
-                                                                   TextTrimming="CharacterEllipsis"
-                                                                   ToolTip="{Binding Path}" />
-                                                    </StackPanel>
+                                                                   FontSize="{StaticResource SizeMeta}"
+                                                                   Foreground="{StaticResource TextMuted}"
+                                                                   Text="{Binding Slot}" />
 
-                                                    <StackPanel Grid.Column="1"
-                                                                VerticalAlignment="Top"
-                                                                hub:HubSpacing.Gap="XSmall"
-                                                                Orientation="Horizontal">
-                                                        <hub:HubIconButton Click="HubUp_Click"
-                                                                           Glyph="ChevronRight"
-                                                                           Tag="{Binding}"
-                                                                           ToolTip="Subir">
-                                                            <hub:HubIconButton.RenderTransform>
-                                                                <RotateTransform Angle="-90" CenterX="14" CenterY="14" />
-                                                            </hub:HubIconButton.RenderTransform>
-                                                        </hub:HubIconButton>
-                                                        <hub:HubIconButton Click="HubDown_Click"
-                                                                           Glyph="ChevronRight"
-                                                                           Tag="{Binding}"
-                                                                           ToolTip="Descer">
-                                                            <hub:HubIconButton.RenderTransform>
-                                                                <RotateTransform Angle="90" CenterX="14" CenterY="14" />
-                                                            </hub:HubIconButton.RenderTransform>
-                                                        </hub:HubIconButton>
-                                                        <hub:HubIconButton Click="HubReveal_Click"
-                                                                           Glyph="Folder"
-                                                                           Tag="{Binding}"
-                                                                           ToolTip="Abrir no Explorer" />
-                                                        <hub:HubIconButton Click="HubRemove_Click"
+                                                        <hub:HubIconButton Grid.Column="5"
+                                                                           VerticalAlignment="Center"
+                                                                           Click="HubRemove_Click"
                                                                            Glyph="Delete"
                                                                            Tag="{Binding}"
                                                                            ToolTip="Remover este hub" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
 
-                                <StackPanel hub:HubSpacing.Gap="Medium" Orientation="Horizontal">
                                     <Button x:Name="AddHub"
-                                            Style="{StaticResource QuietButton}"
+                                            Style="{StaticResource DashedButton}"
                                             Click="AddHub_Click"
-                                            Content="Adicionar hub" />
-                                    <TextBlock x:Name="HubCountHint"
-                                               VerticalAlignment="Center"
-                                               FontSize="{StaticResource SizeHint}"
-                                               Foreground="{StaticResource TextFaint}" />
+                                            Content="Adicionar hub a partir de uma pasta" />
                                 </StackPanel>
-                            </StackPanel>
+                            </hub:HubGroup>
+                        </StackPanel>
 
-                            <!--  ============ GERAL ============  -->
-                            <StackPanel x:Name="PageGeneral" Visibility="Collapsed">
-                                <hub:HubOption Title="Iniciar com o Windows"
-                                               Description="Entra escondido na bandeja quando você liga a máquina, pronto para o atalho.">
-                                    <hub:HubToggle x:Name="StartupToggle" Click="Startup_Click" />
-                                </hub:HubOption>
+                        <!--  ==================== GERAL ====================  -->
+                        <StackPanel x:Name="PageGeneral" hub:HubSpacing.Gap="XXLarge" Visibility="Collapsed">
 
-                                <Border Height="1" Background="{StaticResource Divider}" />
+                            <hub:HubGroup Title="Sistema" Description="Como o Folder Hub se comporta ao ligar o computador.">
+                                <StackPanel>
+                                    <hub:HubOption Title="Iniciar com o Windows" Description="Fica na bandeja, pronto para o atalho.">
+                                        <hub:HubToggle x:Name="StartupToggle" Click="Startup_Click" />
+                                    </hub:HubOption>
+                                    <hub:HubOption Title="Ícone na bandeja" Description="Sem ele não há processo escutando, e o atalho global não funciona.">
+                                        <hub:HubToggle x:Name="ResidentToggle" Click="Resident_Click" />
+                                    </hub:HubOption>
+                                    <hub:HubOption Title="Fechar ao abrir um aplicativo" Description="O modal sai da frente assim que o app sobe.">
+                                        <hub:HubToggle x:Name="CloseAfterToggle" Click="CloseAfter_Click" />
+                                    </hub:HubOption>
+                                    <hub:HubOption Title="Fechar ao perder o foco" Description="Clicar fora some com o hub.">
+                                        <hub:HubToggle x:Name="CloseOnBlurToggle" Click="CloseOnBlur_Click" />
+                                    </hub:HubOption>
+                                    <hub:HubOption x:Name="LastHubRow" Title="Reabrir no último hub usado" Description="Ignorado no modo pasta única.">
+                                        <hub:HubToggle x:Name="LastHubToggle" Click="LastHub_Click" />
+                                    </hub:HubOption>
+                                </StackPanel>
+                            </hub:HubGroup>
 
-                                <hub:HubOption Title="Ficar residente na bandeja"
-                                               Description="Sem isso o atalho global não funciona: não há processo esperando por ele.">
-                                    <hub:HubToggle x:Name="ResidentToggle" Click="Resident_Click" />
-                                </hub:HubOption>
+                            <hub:HubGroup Title="Idioma e atualizações" Description="Preferências gerais da interface.">
+                                <StackPanel>
+                                    <hub:HubOption IsEnabled="False" Title="Idioma" Description="Por enquanto o app só fala português; os textos ainda não estão externalizados.">
+                                        <ComboBox x:Name="LanguageSelect" Style="{StaticResource HubSelect}" />
+                                    </hub:HubOption>
+                                    <hub:HubOption IsEnabled="False" Title="Verificar atualizações automaticamente" Description="Ainda não implementado — não existe canal de atualização.">
+                                        <hub:HubToggle />
+                                    </hub:HubOption>
+                                </StackPanel>
+                            </hub:HubGroup>
 
-                                <Border Height="1" Background="{StaticResource Divider}" />
+                            <hub:HubGroup Title="Dados" Description="Nada sai da sua máquina.">
+                                <StackPanel>
+                                    <hub:HubOption Title="Local das configurações" Description="Um arquivo JSON, editável à mão.">
+                                        <StackPanel hub:HubSpacing.Gap="Small" Orientation="Horizontal">
+                                            <TextBlock x:Name="ConfigPath"
+                                                       VerticalAlignment="Center"
+                                                       Style="{StaticResource MonoValue}" />
+                                            <Button Style="{StaticResource GhostButton}"
+                                                    Click="OpenConfigFolder_Click"
+                                                    Content="Abrir" />
+                                        </StackPanel>
+                                    </hub:HubOption>
+                                    <hub:HubOption Title="Exportar configurações" Description="Leve seus hubs para outra máquina.">
+                                        <Button Style="{StaticResource GhostButton}"
+                                                Click="Export_Click"
+                                                Content="Exportar" />
+                                    </hub:HubOption>
+                                </StackPanel>
+                            </hub:HubGroup>
+                        </StackPanel>
 
-                                <hub:HubOption Title="Fechar depois de abrir um app"
-                                               Description="É o que faz o hub se comportar como lançador, e não como janela.">
-                                    <hub:HubToggle x:Name="CloseAfterToggle" Click="CloseAfter_Click" />
-                                </hub:HubOption>
+                        <!--  ==================== ATALHOS ====================  -->
+                        <StackPanel x:Name="PageKeys" hub:HubSpacing.Gap="XXLarge" Visibility="Collapsed">
 
-                                <Border Height="1" Background="{StaticResource Divider}" />
+                            <hub:HubGroup Title="Atalho global" Description="Abre o modal de qualquer lugar do Windows." Ruled="False">
+                                <StackPanel>
+                                    <Border x:Name="HotKeyBox" Style="{StaticResource SunkenBox}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
 
-                                <hub:HubOption Title="Fechar ao perder o foco"
-                                               Description="Clicar fora some com o hub.">
-                                    <hub:HubToggle x:Name="CloseOnBlurToggle" Click="CloseOnBlur_Click" />
-                                </hub:HubOption>
-                            </StackPanel>
+                                            <ItemsControl x:Name="HotKeyParts" Grid.Column="0" VerticalAlignment="Center">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <StackPanel Orientation="Horizontal" />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Style="{StaticResource KeyPlus}"
+                                                                       Visibility="{Binding Joiner, Converter={StaticResource BoolToVis}}" />
+                                                            <hub:HubKey Style="{StaticResource BigKey}" Text="{Binding Key}" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
 
-                            <!--  ============ ATALHOS ============  -->
-                            <StackPanel x:Name="PageKeys" Visibility="Collapsed">
-                                <hub:HubOption Title="Atalho global"
-                                               Description="Clique e pressione a combinação. Backspace limpa; Esc desiste.">
-                                    <hub:HubHotKeyBox x:Name="HotKeyBox" HotKeyChanged="HotKey_Changed" />
-                                </hub:HubOption>
+                                            <TextBlock x:Name="HotKeyPrompt"
+                                                       Grid.Column="0"
+                                                       VerticalAlignment="Center"
+                                                       FontSize="{StaticResource SizeBody}"
+                                                       Foreground="{StaticResource TabLabel}"
+                                                       Text="Pressione a nova combinação…"
+                                                       Visibility="Collapsed" />
 
-                                <TextBlock x:Name="HotKeyWarning"
-                                           Margin="0,2,0,0"
-                                           FontSize="{StaticResource SizeHint}"
-                                           Foreground="{StaticResource TextMeta}"
-                                           TextWrapping="Wrap"
-                                           Visibility="Collapsed" />
+                                            <Button x:Name="HotKeyButton"
+                                                    Grid.Column="1"
+                                                    Style="{StaticResource GhostButton}"
+                                                    Click="HotKeyChange_Click"
+                                                    Content="Alterar" />
 
-                                <Border Height="1" Margin="0,10,0,0" Background="{StaticResource Divider}" />
+                                            <TextBlock x:Name="HotKeyRecording"
+                                                       Grid.Column="1"
+                                                       VerticalAlignment="Center"
+                                                       FontFamily="{StaticResource MonoFont}"
+                                                       FontSize="{StaticResource SizeMeta}"
+                                                       Foreground="{StaticResource TextMuted}"
+                                                       Text="gravando · esc cancela"
+                                                       Visibility="Collapsed" />
+                                        </Grid>
+                                    </Border>
 
-                                <TextBlock Margin="0,16,0,10"
-                                           FontSize="{StaticResource SizeBody}"
-                                           FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextLabel}"
-                                           Text="Dentro do hub" />
+                                    <TextBlock x:Name="HotKeyWarning"
+                                               Margin="2,10,0,0"
+                                               FontSize="{StaticResource SizeRowHint}"
+                                               Foreground="{StaticResource TextMeta}"
+                                               TextWrapping="Wrap"
+                                               Visibility="Collapsed" />
+                                </StackPanel>
+                            </hub:HubGroup>
 
-                                <ItemsControl x:Name="KeyReference">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Grid Margin="0,0,0,9">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="118" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <hub:HubKey Grid.Column="0"
-                                                            HorizontalAlignment="Left"
-                                                            Text="{Binding Keys}" />
-                                                <TextBlock Grid.Column="1"
-                                                           VerticalAlignment="Center"
-                                                           FontSize="{StaticResource SizeHint}"
-                                                           Foreground="{StaticResource TextMeta}"
-                                                           Text="{Binding What}" />
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
+                            <hub:HubGroup IsEnabled="False"
+                                          Title="Atalho por hub"
+                                          Description="Só no modo multi hubs: pula direto para um hub. Ainda não implementado — hoje o app registra um atalho global só."
+                                          Ruled="False">
+                                <Border Style="{StaticResource SunkenBox}">
+                                    <TextBlock FontSize="{StaticResource SizeRowHint}"
+                                               Foreground="{StaticResource TextMuted}"
+                                               Text="Dentro do hub, Ctrl+1 até Ctrl+9 já pulam para uma aba."
+                                               TextWrapping="Wrap" />
+                                </Border>
+                            </hub:HubGroup>
 
-                            <!--  ============ APARÊNCIA ============  -->
-                            <StackPanel x:Name="PageLook" Visibility="Collapsed">
-                                <hub:HubOption Title="Ordenação dos cards"
-                                               Description="Manual segue os prefixos dos arquivos na pasta, então a ordem é a mesma no Explorer.">
-                                    <ComboBox x:Name="SortSelect"
-                                              Style="{StaticResource HubSelect}"
-                                              SelectionChanged="Sort_Changed" />
-                                </hub:HubOption>
+                            <hub:HubGroup Title="Dentro do modal" Description="Fixo, mas você pode desligar a troca por Tab.">
+                                <StackPanel>
+                                    <hub:HubOption Title="Navegar entre os cards" Description="Percorre os atalhos do hub atual.">
+                                        <StackPanel hub:HubSpacing.Gap="XSmall" Orientation="Horizontal">
+                                            <hub:HubKey Style="{StaticResource BigKey}" Text="↑" />
+                                            <hub:HubKey Style="{StaticResource BigKey}" Text="↓" />
+                                            <hub:HubKey Style="{StaticResource BigKey}" Text="←" />
+                                            <hub:HubKey Style="{StaticResource BigKey}" Text="→" />
+                                        </StackPanel>
+                                    </hub:HubOption>
+                                    <hub:HubOption Title="Abrir o card selecionado">
+                                        <hub:HubKey Style="{StaticResource BigKey}" Text="Enter" />
+                                    </hub:HubOption>
+                                    <hub:HubOption Title="Voltar o foco para a busca">
+                                        <hub:HubKey Style="{StaticResource BigKey}" Text="/" />
+                                    </hub:HubOption>
+                                    <hub:HubOption x:Name="TabSwitchRow" Title="Alternar hubs com Tab" Description="Só faz sentido no modo multi hubs.">
+                                        <hub:HubToggle x:Name="TabSwitchToggle" Click="TabSwitch_Click" />
+                                    </hub:HubOption>
+                                    <hub:HubOption Title="Fechar o modal">
+                                        <hub:HubKey Style="{StaticResource BigKey}" Text="Esc" />
+                                    </hub:HubOption>
+                                </StackPanel>
+                            </hub:HubGroup>
+                        </StackPanel>
 
-                                <Border Height="1" Background="{StaticResource Divider}" />
+                        <!--  ==================== APARÊNCIA ====================  -->
+                        <StackPanel x:Name="PageLook" hub:HubSpacing.Gap="XXLarge" Visibility="Collapsed">
 
-                                <hub:HubOption Title="Máximo de colunas"
-                                               Description="O hub escolhe quantas colunas usar até este limite, preferindo deixar a última fileira cheia.">
-                                    <hub:HubStepper x:Name="ColumnsStepper"
-                                                    Maximum="10"
-                                                    Minimum="3"
-                                                    Unit="colunas"
-                                                    ValueChanged="Columns_Changed" />
-                                </hub:HubOption>
+                            <hub:HubGroup Title="Tema" Description="O modal foi desenhado para o escuro; o claro é uma adaptação." Ruled="False">
+                                <StackPanel>
+                                    <UniformGrid Columns="3" Rows="1">
+                                        <RadioButton x:Name="ThemeDark"
+                                                     Margin="0,0,5,0"
+                                                     Style="{StaticResource ChoiceCard}"
+                                                     GroupName="Theme"
+                                                     IsChecked="True"
+                                                     Checked="Theme_Changed"
+                                                     Tag="Escuro">
+                                            <TextBlock Style="{StaticResource ChoiceCardText}" Text="Grafite com acrylic." />
+                                        </RadioButton>
+                                        <RadioButton x:Name="ThemeLight"
+                                                     Margin="5,0"
+                                                     Style="{StaticResource ChoiceCard}"
+                                                     GroupName="Theme"
+                                                     Checked="Theme_Changed"
+                                                     Tag="Claro">
+                                            <TextBlock Style="{StaticResource ChoiceCardText}" Text="Superfície clara, contraste suave e foco no conteúdo." />
+                                        </RadioButton>
+                                        <RadioButton Margin="5,0,0,0"
+                                                     Style="{StaticResource ChoiceCard}"
+                                                     GroupName="Theme"
+                                                     IsEnabled="False"
+                                                     Tag="Sistema">
+                                            <TextBlock Style="{StaticResource ChoiceCardText}" Text="Depende do tema claro existir." />
+                                        </RadioButton>
+                                    </UniformGrid>
+                                    <Button Margin="0,12,0,0"
+                                            HorizontalAlignment="Right"
+                                            Style="{StaticResource AccentButton}"
+                                            Click="RestartTheme_Click"
+                                            Content="Reiniciar agora" />
+                                </StackPanel>
+                            </hub:HubGroup>
 
-                                <Border Height="1" Background="{StaticResource Divider}" />
+                            <hub:HubGroup Title="Transparência do acrylic" Description="Quanto do desktop aparece atrás do modal." Ruled="False">
+                                <Border Padding="16,18" Style="{StaticResource SunkenBox}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                   Margin="0,0,16,0"
+                                                   VerticalAlignment="Center"
+                                                   FontFamily="{StaticResource MonoFont}"
+                                                   FontSize="{StaticResource SizeMeta}"
+                                                   Foreground="{StaticResource TextMeta}"
+                                                   Text="opaco" />
+                                        <Slider x:Name="TransparencySlider"
+                                                Grid.Column="1"
+                                                Style="{StaticResource HubSlider}"
+                                                Maximum="90"
+                                                Minimum="0"
+                                                ValueChanged="Transparency_Changed" />
+                                        <TextBlock Grid.Column="2"
+                                                   Margin="16,0,16,0"
+                                                   VerticalAlignment="Center"
+                                                   FontFamily="{StaticResource MonoFont}"
+                                                   FontSize="{StaticResource SizeMeta}"
+                                                   Foreground="{StaticResource TextMeta}"
+                                                   Text="translúcido" />
+                                        <TextBlock x:Name="TransparencyValue"
+                                                   Grid.Column="3"
+                                                   MinWidth="34"
+                                                   VerticalAlignment="Center"
+                                                   FontFamily="{StaticResource MonoFont}"
+                                                   FontSize="{StaticResource SizeHint}"
+                                                   Foreground="{StaticResource TabLabel}"
+                                                   TextAlignment="Right" />
+                                    </Grid>
+                                </Border>
+                            </hub:HubGroup>
 
-                                <hub:HubOption Title="Arquivo de tema"
-                                               Description="Um .xaml carregado depois do tema embutido: o que ele definir vence.">
-                                    <StackPanel hub:HubSpacing.Gap="Small" Orientation="Horizontal">
-                                        <Button Padding="12,0"
-                                                Style="{StaticResource QuietButton}"
-                                                Click="PickTheme_Click"
-                                                Content="Escolher…" />
-                                        <Button x:Name="ClearTheme"
-                                                Padding="12,0"
-                                                Style="{StaticResource QuietButton}"
-                                                Click="ClearTheme_Click"
-                                                Content="Limpar" />
-                                    </StackPanel>
-                                </hub:HubOption>
+                            <hub:HubGroup Title="Densidade dos cards" Description="Define o tamanho do ícone e o respiro do card." Ruled="False">
+                                <ListBox x:Name="DensitySegment"
+                                         Style="{StaticResource Segment}"
+                                         SelectionChanged="Density_Changed">
+                                    <ListBoxItem Content="Compacto" />
+                                    <ListBoxItem Content="Padrão" />
+                                    <ListBoxItem Content="Grande" />
+                                </ListBox>
+                            </hub:HubGroup>
 
-                                <TextBlock x:Name="ThemePath"
-                                           Margin="0,2,0,0"
-                                           FontFamily="{StaticResource MonoFont}"
-                                           FontSize="{StaticResource SizeKey}"
-                                           Foreground="{StaticResource TextFaint}"
-                                           TextTrimming="CharacterEllipsis" />
-                            </StackPanel>
+                            <hub:HubGroup Title="Detalhes" Description="Ajustes finos do modal.">
+                                <StackPanel>
+                                    <hub:HubOption Title="Mostrar caminho da pasta" Description="Aparece como subtítulo, em fonte mono.">
+                                        <hub:HubToggle x:Name="ShowPathToggle" Click="ShowPath_Click" />
+                                    </hub:HubOption>
+                                    <hub:HubOption Title="Mostrar contagem de atalhos" Description="O rodapé &quot;4 atalhos&quot;.">
+                                        <hub:HubToggle x:Name="ShowCountToggle" Click="ShowCount_Click" />
+                                    </hub:HubOption>
+                                    <hub:HubOption Title="Reduzir animações" Description="Corta entradas e transições.">
+                                        <hub:HubToggle x:Name="ReduceMotionToggle" Click="ReduceMotion_Click" />
+                                    </hub:HubOption>
+                                    <hub:HubOption Title="Máximo de colunas" Description="O hub escolhe quantas usar até este limite, preferindo deixar a última fileira cheia.">
+                                        <hub:HubStepper x:Name="ColumnsStepper"
+                                                        Maximum="10"
+                                                        Minimum="3"
+                                                        Unit="colunas"
+                                                        ValueChanged="Columns_Changed" />
+                                    </hub:HubOption>
+                                    <hub:HubOption Title="Ordenação dos cards" Description="Manual segue os prefixos dos arquivos na pasta.">
+                                        <ComboBox x:Name="SortSelect"
+                                                  Style="{StaticResource HubSelect}"
+                                                  SelectionChanged="Sort_Changed" />
+                                    </hub:HubOption>
+                                    <hub:HubOption Title="Arquivo de tema" Description="Um .xaml carregado depois do embutido. Vale na próxima abertura.">
+                                        <StackPanel hub:HubSpacing.Gap="Small" Orientation="Horizontal">
+                                            <TextBlock x:Name="ThemePath"
+                                                       VerticalAlignment="Center"
+                                                       Style="{StaticResource MonoValue}" />
+                                            <Button Style="{StaticResource GhostButton}"
+                                                    Click="PickTheme_Click"
+                                                    Content="Escolher" />
+                                            <Button x:Name="ClearTheme"
+                                                    Style="{StaticResource GhostButton}"
+                                                    Click="ClearTheme_Click"
+                                                    Content="Limpar" />
+                                        </StackPanel>
+                                    </hub:HubOption>
+                                </StackPanel>
+                            </hub:HubGroup>
+                        </StackPanel>
 
-                            <!--  ============ SOBRE ============  -->
-                            <StackPanel x:Name="PageAbout" Visibility="Collapsed">
-                                <TextBlock FontSize="{StaticResource SizeTitle}"
-                                           FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextPrimary}"
-                                           Text="FolderHub" />
-                                <TextBlock x:Name="VersionText"
-                                           Margin="0,4,0,0"
-                                           FontFamily="{StaticResource MonoFont}"
-                                           FontSize="{StaticResource SizeMeta}"
-                                           Foreground="{StaticResource TextMeta}" />
-                                <TextBlock Margin="0,14,0,0"
-                                           MaxWidth="420"
-                                           HorizontalAlignment="Left"
-                                           FontSize="{StaticResource SizeBody}"
-                                           Foreground="{StaticResource TextFaint}"
-                                           Text="Um lançador que transforma uma pasta de atalhos num hub visual. A pasta é a configuração: não existe registro de aplicativos nem banco de dados."
-                                           TextWrapping="Wrap" />
+                        <!--  ==================== SOBRE ====================  -->
+                        <StackPanel x:Name="PageAbout" hub:HubSpacing.Gap="XXLarge" Visibility="Collapsed">
 
-                                <Border Height="1" Margin="0,18,0,18" Background="{StaticResource Divider}" />
+                            <hub:HubGroup Title="Folder Hub"
+                                          Description="Mini launcher para Windows 11. Transforma pastas em hubs de atalhos."
+                                          Ruled="False">
+                                <StackPanel hub:HubSpacing.Gap="Medium" Orientation="Horizontal">
+                                    <TextBlock x:Name="VersionText"
+                                               VerticalAlignment="Center"
+                                               FontFamily="{StaticResource MonoFont}"
+                                               FontSize="{StaticResource SizeMeta}"
+                                               Foreground="{StaticResource TextMeta}" />
+                                    <Button Style="{StaticResource GhostButton}"
+                                            Click="Repo_Click"
+                                            Content="Repositório"
+                                            Tag="https://github.com/Rudhery/FolderHub" />
+                                </StackPanel>
+                            </hub:HubGroup>
 
-                                <hub:HubOption Title="Arquivo de configuração"
-                                               Description="Dá para editar à mão; o hub relê sozinho quando ele muda.">
-                                    <Button Style="{StaticResource QuietButton}"
-                                            Click="OpenConfigFolder_Click"
-                                            Content="Abrir a pasta" />
-                                </hub:HubOption>
+                            <hub:HubGroup Title="Detalhes" Description="Informações da instalação.">
+                                <StackPanel>
+                                    <hub:HubOption Title="Licença">
+                                        <TextBlock Style="{StaticResource MonoValue}" Text="MIT" />
+                                    </hub:HubOption>
+                                    <hub:HubOption Title="Instalado em">
+                                        <TextBlock x:Name="InstallPath" Style="{StaticResource MonoValue}" />
+                                    </hub:HubOption>
+                                    <hub:HubOption Title="Telemetria" Description="Nenhuma. Nada é enviado.">
+                                        <TextBlock Style="{StaticResource MonoValue}" Text="desativada" />
+                                    </hub:HubOption>
+                                    <hub:HubOption Title="Registro" Description="O que o app engole em silêncio fica anotado aqui.">
+                                        <Button Style="{StaticResource GhostButton}"
+                                                Click="OpenLog_Click"
+                                                Content="Abrir" />
+                                    </hub:HubOption>
+                                </StackPanel>
+                            </hub:HubGroup>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
 
-                                <TextBlock x:Name="ConfigPath"
-                                           Margin="0,2,0,0"
-                                           FontFamily="{StaticResource MonoFont}"
-                                           FontSize="{StaticResource SizeKey}"
-                                           Foreground="{StaticResource TextFaint}"
-                                           TextTrimming="CharacterEllipsis" />
-                            </StackPanel>
-                        </Grid>
-                    </ScrollViewer>
+                <!--  ============ RODAPÉ ============  -->
+                <Border Grid.Row="2"
+                        Padding="26,16"
+                        Background="{StaticResource PanelTint}"
+                        BorderBrush="{StaticResource PanelBorder}"
+                        BorderThickness="0,1,0,0"
+                        CornerRadius="0,0,8,0">
+                    <Grid>
+                        <TextBlock x:Name="StatusText"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Center"
+                                   FontFamily="{StaticResource MonoFont}"
+                                   FontSize="{StaticResource SizeMeta}"
+                                   Foreground="{StaticResource TextMeta}"
+                                   Text="alterações salvas automaticamente" />
+                        <StackPanel HorizontalAlignment="Right"
+                                    hub:HubSpacing.Gap="Small"
+                                    Orientation="Horizontal">
+                            <Button Style="{StaticResource GhostButton}"
+                                    Click="Restore_Click"
+                                    Content="Restaurar padrões" />
+                            <Button Style="{StaticResource AccentButton}"
+                                    Click="Close_Click"
+                                    Content="Concluir" />
+                        </StackPanel>
+                    </Grid>
                 </Border>
-            </Grid>
-
-            <!--  ============ RODAPÉ ============  -->
-            <Grid Grid.Row="2" Margin="24,16,24,18">
-                <Border Height="1" VerticalAlignment="Top" Background="{StaticResource Divider}" />
-                <Grid Margin="0,14,0,0">
-                    <TextBlock x:Name="StatusText"
-                               HorizontalAlignment="Left"
-                               FontFamily="{StaticResource MonoFont}"
-                               FontSize="{StaticResource SizeMeta}"
-                               Foreground="{StaticResource TextMeta}" />
-                    <TextBlock HorizontalAlignment="Right"
-                               FontFamily="{StaticResource MonoFont}"
-                               FontSize="{StaticResource SizeMeta}"
-                               Foreground="{StaticResource TextMeta}"
-                               Text="esc fechar" />
-                </Grid>
             </Grid>
         </Grid>
     </Border>

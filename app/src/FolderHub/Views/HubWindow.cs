@@ -3,6 +3,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shell;
+using FolderHub.Controls;
 using FolderHub.Services;
 
 namespace FolderHub.Views;
@@ -22,8 +23,22 @@ namespace FolderHub.Views;
 /// </summary>
 public class HubWindow : Window
 {
-    protected HubWindow()
+    private readonly bool _acrylic;
+
+    /// <param name="acrylic">
+    /// Usar o acrílico do Windows. Ligado, o DWM desenha o fundo e arredonda a
+    /// janela — em cerca de 8px, que é o raio do hub.
+    ///
+    /// Desligado, a janela fica de verdade transparente e quem define a forma é
+    /// a borda do conteúdo. É o que a configuração precisa: ela pede canto de
+    /// 22px, e com o DWM arredondando em 8 sobrava uma cunha escura fora do
+    /// arco. A superfície dela é 92% opaca, então o acrílico atrás quase não
+    /// aparecia — e em troca vem a sombra projetada que o design pede.
+    /// </param>
+    protected HubWindow(bool acrylic = true)
     {
+        _acrylic = acrylic;
+
         WindowStyle = WindowStyle.None;
         ResizeMode = ResizeMode.NoResize;
         Background = Brushes.Transparent;
@@ -35,6 +50,14 @@ public class HubWindow : Window
         TextOptions.SetTextRenderingMode(this, TextRenderingMode.ClearType);
 
         if (Application.Current?.TryFindResource("UiFont") is FontFamily font) FontFamily = font;
+
+        if (!acrylic)
+        {
+            // Precisa ser antes de o handle nascer. Com isto não há moldura
+            // nativa nenhuma, então o WindowChrome também não faz falta.
+            AllowsTransparency = true;
+            return;
+        }
 
         // Tira a moldura nativa sem perder o redimensionamento por código nem a
         // sombra que o DWM desenha em volta.
@@ -62,7 +85,7 @@ public class HubWindow : Window
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
-        WindowEffects.ApplyAcrylic(this);
+        if (_acrylic) WindowEffects.ApplyAcrylic(this);
     }
 
     /// <summary>Esc fecha. Em <c>OnKeyDown</c>, então quem quiser tratar antes usa o preview.</summary>
@@ -88,6 +111,18 @@ public class HubWindow : Window
     protected void FadeIn(double lift = 8, int milliseconds = 160)
     {
         if (HubShell is null) return;
+
+        if (HubMotion.Reduced)
+        {
+            HubShell.BeginAnimation(OpacityProperty, null);
+            HubShell.Opacity = 1;
+            if (HubShell.RenderTransform is TranslateTransform instant)
+            {
+                instant.BeginAnimation(TranslateTransform.YProperty, null);
+                instant.Y = 0;
+            }
+            return;
+        }
 
         HubShell.BeginAnimation(OpacityProperty,
             new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(milliseconds)));

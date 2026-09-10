@@ -42,6 +42,10 @@ public partial class App : Application
         Config = HubConfig.Load();
         ApplyTheme(Config.ThemeFile);
 
+        // Depois do tema: densidade e transparência entram por cima do que ele
+        // definiu, e precisam dos valores dele para saber ao que voltar.
+        LiveTheme.Apply(Config);
+
         // Argumento vence a config: permite vários hubs, um atalho por pasta.
         //   FolderHub.exe "D:\Jogos"     abre aquele hub
         //   FolderHub.exe --resident     fica residente e aparece
@@ -49,6 +53,8 @@ public partial class App : Application
         string? folder = null;
         bool background = Config.Background;
         bool askedForResident = false;
+        bool openSettings = false;
+        bool openAppearance = false;
 
         foreach (string arg in e.Args)
         {
@@ -67,6 +73,15 @@ public partial class App : Application
 
                 case "--foreground":
                     background = false;
+                    continue;
+
+                case "--settings":
+                    openSettings = true;
+                    continue;
+
+                case "--appearance":
+                    openSettings = true;
+                    openAppearance = true;
                     continue;
             }
 
@@ -99,6 +114,7 @@ public partial class App : Application
             ? [new HubTab { Path = folder }]
             : [.. Config.Tabs
                     .Where(t => Directory.Exists(t.Path))
+                    .Take(Config.SingleFolder ? 1 : int.MaxValue)
                     .Select(t => new HubTab { Path = t.Path, CustomName = t.Name })];
 
         if (tabs.Count == 0)
@@ -120,6 +136,11 @@ public partial class App : Application
         var window = new MainWindow(tabs);
         MainWindow = window;
         window.Show();
+
+        if (openSettings)
+        {
+            window.Dispatcher.BeginInvoke(() => window.OpenSettings(openAppearance));
+        }
     }
 
     /// <summary>

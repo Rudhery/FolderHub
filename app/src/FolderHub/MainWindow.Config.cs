@@ -21,6 +21,10 @@ public partial class MainWindow
     private SortMode _appliedSort;
     private int _appliedColumns;
     private bool _appliedBackground;
+    private CardDensity _appliedDensity;
+    private bool _appliedShowPath;
+    private bool _appliedShowCount;
+    private bool _appliedSingleFolder;
 
     private void WatchConfig()
     {
@@ -36,6 +40,10 @@ public partial class MainWindow
         _appliedSort = App.Config.Sort;
         _appliedColumns = App.Config.MaxColumns;
         _appliedBackground = App.Background;
+        _appliedDensity = App.Config.Density;
+        _appliedShowPath = App.Config.ShowPath;
+        _appliedShowCount = App.Config.ShowCount;
+        _appliedSingleFolder = App.Config.SingleFolder;
     }
 
     private void OnConfigChanged()
@@ -53,6 +61,13 @@ public partial class MainWindow
     private void ApplyConfig()
     {
         var config = App.Config;
+        bool themeChanged = config.ThemeMode != LiveTheme.AppliedMode;
+
+        // Antes de qualquer medida: o redimensionamento abaixo lê o tamanho do
+        // card do dicionário, e é aqui que a densidade o reescreve.
+        // A paleta completa só troca na próxima abertura; assim recursos estáticos
+        // e dinâmicos nunca ficam misturados na mesma janela.
+        LiveTheme.Apply(config, applyTheme: !themeChanged);
 
         if (config.Background != _appliedBackground)
         {
@@ -76,21 +91,32 @@ public partial class MainWindow
         }
 
         bool tabsChanged = TabsDiffer(config);
+        bool modeChanged = config.SingleFolder != _appliedSingleFolder;
         bool sortChanged = config.Sort != _appliedSort;
         bool columnsChanged = config.MaxColumns != _appliedColumns;
 
-        if (tabsChanged)
+        // A densidade muda o tamanho do card, então a janela inteira precisa
+        // ser remedida — senão o card encolhe dentro de uma janela do tamanho
+        // antigo e sobra uma faixa vazia.
+        bool densityChanged = config.Density != _appliedDensity;
+
+        // Estes dois só escondem um texto, mas quem os desenha é o Reload; sem
+        // um, a mudança só apareceria na próxima vez que a pasta mudasse.
+        bool chromeChanged = config.ShowPath != _appliedShowPath
+                             || config.ShowCount != _appliedShowCount;
+
+        if (tabsChanged || modeChanged)
         {
             RebuildTabsFromConfig(config);       // já recarrega e redimensiona
         }
-        else if (sortChanged)
+        else if (sortChanged || chromeChanged)
         {
-            Reload(resize: columnsChanged, animate: true);
+            Reload(resize: columnsChanged, animate: sortChanged);
         }
-        else if (columnsChanged)
-        {
-            ResizeToContent(_all.Count);
-        }
+
+        // Fora do else: uma troca de densidade tem o mesmo número de itens de
+        // antes, e o Reload só remede quando a contagem muda.
+        if (densityChanged || columnsChanged) ResizeToContent(_all.Count);
 
         RememberApplied();
     }
@@ -114,8 +140,11 @@ public partial class MainWindow
     {
         string? current = _tab?.Path;
 
-        var rebuilt = config.Tabs
+        var source = config.Tabs
             .Where(t => !string.IsNullOrWhiteSpace(t.Path))
+            .Take(config.SingleFolder ? 1 : int.MaxValue);
+
+        var rebuilt = source
             .Select(t => new HubTab { Path = t.Path, CustomName = t.Name })
             .ToList();
 
@@ -124,8 +153,10 @@ public partial class MainWindow
         BuildTabs(rebuilt);
 
         // volta para a aba que estava aberta, se ela sobreviveu
-        var keep = rebuilt.FirstOrDefault(t => string.Equals(t.Path, current, StringComparison.OrdinalIgnoreCase))
-                   ?? rebuilt[0];
+        var keep = config.SingleFolder
+            ? rebuilt[0]
+            : rebuilt.FirstOrDefault(t => string.Equals(t.Path, current, StringComparison.OrdinalIgnoreCase))
+              ?? rebuilt[Math.Clamp(config.LastHub, 0, rebuilt.Count - 1)];
 
         ActivateTab(keep, resize: true, animate: true);
     }
