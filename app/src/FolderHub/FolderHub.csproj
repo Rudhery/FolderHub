@@ -12,7 +12,7 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\folderhub.ico</ApplicationIcon>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Product>FolderHub</Product>
     <Company>FolderHub</Company>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>

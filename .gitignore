@@ -14,3 +14,9 @@ dist/
 
 # ferramentas
 .playwright-mcp/
+
+# saídas de teste do publish.ps1
+dist-test*/
+
+# fontes de design (Claude Design), mantidas fora do repositório
+web/*.zip

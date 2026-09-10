@@ -31,7 +31,7 @@ Drop a shortcut in the folder and it shows up. Press `Ctrl+Alt+Space` and it is 
 
 ```
 app/     the launcher itself — WPF, .NET 10
-web/     the landing page (not built yet)
+web/     the landing page — static HTML, published to GitHub Pages
 docs/    screenshots used by this README
 ```
 
@@ -53,8 +53,10 @@ app is the order you see in Explorer, and vice versa.
 - **Global hotkey** — `Ctrl+Alt+Space` opens the hub from anywhere, resident in the tray.
 - **Reads any shortcut** — `.lnk`, `.url`, `.exe`, `.bat`, `.cmd`, `.ps1`, `.appref-ms`, `.msc`.
 - **Real Windows 11 acrylic**, rounded corners and dark mode via DWM.
+- **Dark and light themes**, with how much of the desktop shows through as a slider.
 - **Sharp icons** — 256px through the Shell API instead of the blurry 32px most launchers settle for.
 - **Adaptive grid** — the column count and window size follow the number of shortcuts.
+- **Three card densities** — compact, default, large; the window resizes to match.
 - **Type to filter**, arrow keys to move, `Enter` to launch.
 - **Drag to reorder**, saved into the folder itself as filename prefixes.
 - **Drag and drop** — drop a folder to switch hubs, drop programs to add them.
@@ -67,6 +69,10 @@ app is the order you see in Explorer, and vice versa.
 Grab `FolderHub-Setup-x.y.z.exe` from [Releases](https://github.com/Rudhery/FolderHub/releases)
 and run it. It installs per-user, so **no admin prompt**, and offers to start with
 Windows so the hotkey is always there.
+
+> The application interface is in Portuguese only. This README is in English
+> because the code and the design notes are what a reader usually comes for;
+> the strings are not externalised yet.
 
 Or build it yourself:
 
@@ -164,10 +170,12 @@ so do `01 -`, `01.`, `01_` and `01)`.
 |---|---|
 | `Ctrl+Alt+Space` | show / hide the hub (resident mode) |
 | type | filter |
+| `/` | focus the search field |
 | `←` `↑` `→` `↓` | move between cards |
 | `Enter` | launch the selected card |
 | `Esc` | clear the search; if already empty, dismiss |
 | `F5` | reload and re-read the icons |
+| `Tab` | next tab — turn it off and only `Ctrl+Tab` switches |
 | `Ctrl+Tab` / `Ctrl+Shift+Tab` | next / previous tab |
 | `Ctrl+1` … `Ctrl+9` | jump straight to a tab |
 | `Ctrl+O` | change the active tab's folder |
@@ -184,10 +192,28 @@ in when the hub is resident and hidden.
 <img src="docs/settings.png" width="760" alt="FolderHub settings">
 </p>
 
-There is no OK button: every change is written and applied at once. Add a hub and
-its tab appears; raise the column limit and the window resizes while you watch.
-The one exception is the theme file, which is read at startup — the screen says so
-where you pick it.
+Five sections. **Hubs** is the folder list — add, rename, reorder or remove up to
+eight, plus the choice between one folder and several. **General** covers starting
+with Windows, the tray, and when the hub dismisses itself. **Shortcuts** is the
+global hotkey and what the keys do inside the window. **Appearance** holds the
+theme, how much of the desktop shows through, the card density and the smaller
+details — path, count, reduced motion, column limit, sort, theme file. **About**
+is version, license and where the config and the log live.
+
+Nothing waits for an OK. Every change is written and applied at once — the button
+in the corner only closes the window. Add a hub and its tab appears; raise the
+column limit and the window resizes while you watch; drag the transparency slider
+and the surface follows it.
+
+Two things are read at startup and say so where you pick them: the theme file, and
+the dark/light choice — that one offers to restart the app for you. And three rows
+are shown disabled rather than hidden, because hiding them would only raise the
+same question later: a system theme that follows Windows, an interface language
+other than Portuguese, and automatic updates.
+
+<p align="center">
+<img src="docs/appearance.png" width="760" alt="Appearance: theme, transparency and card density">
+</p>
 
 The hotkey field is recorded, not typed: click it and press the combination. It
 refuses one without a modifier because Windows refuses it too, and it tells you
@@ -213,6 +239,18 @@ the app watches it and reloads on change.
   "closeOnBlur": false,        // dismiss when the window loses focus
   "sort": "Manual",            // Manual | NameAsc | NameDesc | Recent
   "maxColumns": 7,
+
+  "singleFolder": false,       // one folder, no tab strip — the others stay in the config
+  "rememberLastHub": true,     // reopen on the tab you were in
+  "lastHub": 0,                // which one that was, written when you switch
+  "tabSwitchesHub": true,      // bare Tab switches; off, only Ctrl+Tab does
+  "showPath": true,            // the folder path under the hub name
+  "showCount": true,           // "N shortcuts" in the footer
+
+  "themeMode": "Dark",         // Dark | Light
+  "transparency": 30,          // 0 opaque … 100, how much desktop shows through
+  "density": "Default",        // Compact | Default | Large
+  "reduceMotion": false,       // drop the entry and transition animations
   "themeFile": null            // path to a .xaml that overrides the theme
 }
 ```
@@ -277,6 +315,16 @@ from, without recompiling:
 than fatal. Note the file is loaded as XAML, so treat it with the same trust as
 the config that points at it.
 
+The light theme is the same idea applied to the app itself: `Themes/Light.xaml`
+redefines those keys and nothing else, loaded over the dark one when `themeMode`
+is `Light`. A `themeFile` of your own still wins, because it is loaded last.
+
+Density and transparency are the exception to "read at startup". They rewrite
+their keys in the live resource dictionary, which is why the elements that depend
+on them use `DynamicResource` — `StaticResource` resolves once and never looks
+again. The theme's own values are remembered first, so going back to Default
+restores what your theme asked for rather than what the app ships.
+
 Motion is deliberately not themeable: durations and easing live in
 `Controls/HubMotion.cs`, because a theme that slowed the hub down would work
 against the point of it.
@@ -285,12 +333,14 @@ against the point of it.
 
 The interface follows a monochrome, cool-toned system with **no accent colour** —
 every bit of hierarchy comes from white at different opacities over the acrylic.
+The light theme inverts the ink rather than introducing a palette: near-white
+surface, the same greys, `#14161A` at matching opacities.
 
 | | |
 |---|---|
 | surface | `rgba(26,28,32,0.86)` over acrylic, border `rgba(255,255,255,0.07)` |
-| card | `rgba(255,255,255,0.028)` · hover `0.065` · selected `0.075` + a 2px ring |
-| icon tile | `#22252A` → `#282C32` → `#2C3138`, 44px, radius 12 |
+| card | `rgba(255,255,255,0.03)` · hover `0.067` · selected `0.075` + a ring |
+| icon tile | `#22252A`, 40px on a 160×118 card — 32 and 48 at the other densities |
 | text | `#EEF1F4` at 100 / 88 / 58 / 42% |
 | transition | 150 ms on background and border only — no lift, no glow |
 | type | Manrope 400/500/600 · JetBrains Mono for metadata |
@@ -323,6 +373,7 @@ app/src/FolderHub/
   Themes/
     HubTheme.xaml           every colour, radius, font and measurement
     HubControls.xaml        the templates — no literal values, only tokens
+    Light.xaml              the same keys, light — loaded over the dark theme
   Views/
     HubWindow.cs            the shared shell: chrome, acrylic, Esc, fade
     SettingsWindow.xaml     the settings screen
@@ -337,6 +388,7 @@ app/src/FolderHub/
     HubMotion.cs            every duration and curve, in one place
     HubGlyph.cs             the icon set, by name instead of codepoint
     HubToggle.cs            the switch
+    HubGroup.cs             a block of settings rows: title, one line, the rows
     HubOption.cs            one settings row: what it is, and the control for it
     HubStepper.cs           a number with minus and plus
     HubHotKeyBox.cs         records a key combination by having you press it
@@ -354,6 +406,9 @@ app/src/FolderHub/
     TrayIcon.cs             Shell_NotifyIcon
     SingleInstance.cs       mutex + message to the running instance
     WindowEffects.cs        acrylic, rounded corners, dark mode
+    LiveTheme.cs            theme, density and transparency, applied without a restart
+    CardDensity.cs          the three card sizes, in the pixels window sizing needs
+    ThemeMode.cs            dark or light
     Log.cs                  file log, so swallowed failures leave a trace
   Interop/Native.cs         DWM, Shell, GDI, user32
 app/tests/FolderHub.Tests/  xUnit
@@ -391,10 +446,15 @@ A few decisions worth calling out:
 dotnet test app/FolderHub.sln
 ```
 
-66 tests over the pure logic: what the scanner picks up, the four sort modes (including
+96 tests. Most cover the pure logic: what the scanner picks up, the four sort modes (including
 natural ordering, so `Item2` comes before `Item10`), the manual-order renaming with its
-collision case, the hotkey parser, the config migration from single folder to tabs, the
-grid column maths, the accent-insensitive search, and path shortening.
+collision case, the hotkey parser — walked over the whole keyboard, because `HotKeyText`
+writing what `GlobalHotKey` cannot read fails silently — the config migration from single
+folder to tabs, the grid column maths, the accent-insensitive search, and path shortening.
+
+The rest are smoke tests over what the compiler does not check: the resource dictionaries
+and the window templates actually loading, in both themes. A `StaticResource` pointing at
+a key that no longer exists compiles perfectly and throws when the window opens.
 
 ## Why not a Windows service?
 

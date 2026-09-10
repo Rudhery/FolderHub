@@ -2,17 +2,15 @@ name: pages
 
 # Publica web/ no GitHub Pages.
 #
-# Está em workflow_dispatch (execução manual) de propósito: o repositório ainda
-# é privado, e Pages em repositório privado exige plano pago. Quando ele virar
-# público, habilite Pages em Settings → Pages (source: GitHub Actions) e
-# descomente o gatilho de push abaixo.
+# Exige Pages habilitado em Settings → Pages com origem "GitHub Actions".
+# Enquanto isso não estiver ligado, o job falha no configure-pages — e não antes.
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - '.github/workflows/pages.yml'
   workflow_dispatch:
-  # push:
-  #   branches: [main]
-  #   paths:
-  #     - 'web/**'
-  #     - '.github/workflows/pages.yml'
 
 permissions:
   contents: read

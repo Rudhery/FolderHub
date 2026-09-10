@@ -60,10 +60,10 @@ perdido — medido percorrendo a página inteira: mediana de 10 ms, pior caso
 
 ## Publicando
 
-`.github/workflows/pages.yml` publica esta pasta no GitHub Pages. Está em
-execução manual porque o repositório ainda é privado; quando ele virar público,
-habilite Pages em **Settings → Pages** (origem: GitHub Actions) e descomente o
-gatilho de `push` no workflow.
+`.github/workflows/pages.yml` publica esta pasta no GitHub Pages a cada push
+em `main` que toque `web/`. O passo que falta é fora do repositório: habilitar
+Pages em **Settings → Pages** com origem **GitHub Actions**. Sem isso o job
+falha no `configure-pages`.
 
 ## O conteúdo saiu do design
 

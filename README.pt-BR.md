@@ -31,7 +31,7 @@ Colocou um atalho na pasta, aparece. Apertou `Ctrl+Alt+Space`, ele está lá em 
 
 ```
 app/     o launcher em si — WPF, .NET 10
-web/     a landing page (ainda não feita)
+web/     a landing page — HTML estático, publicada no GitHub Pages
 docs/    as imagens usadas neste README
 ```
 
@@ -53,8 +53,10 @@ que aparece no Explorer, e vice-versa.
 - **Atalho global** — `Ctrl+Alt+Space` abre o hub de qualquer lugar, com o app na bandeja.
 - **Lê qualquer atalho** — `.lnk`, `.url`, `.exe`, `.bat`, `.cmd`, `.ps1`, `.appref-ms`, `.msc`.
 - **Acrílico nativo do Windows 11**, cantos arredondados e modo escuro via DWM.
+- **Tema escuro e claro**, e quanto do desktop aparece atrás da janela num controle só.
 - **Ícones nítidos** — 256px pela Shell API, em vez dos 32px borrados que a maioria usa.
 - **Grade adaptativa** — colunas e tamanho da janela seguem a quantidade de atalhos.
+- **Três densidades de card** — compacto, padrão e grande; a janela acompanha.
 - **Digite para filtrar**, setas para navegar, `Enter` para abrir.
 - **Arraste para reordenar**, e a ordem é gravada na própria pasta.
 - **Arrastar e soltar** — solte uma pasta para trocar de hub, solte programas para adicionar.
@@ -171,6 +173,7 @@ funcionando, e ele aceita `01 -`, `01.`, `01_` e `01)`.
 | `Enter` | abre o card selecionado |
 | `Esc` | limpa a busca; se já estiver vazia, fecha |
 | `F5` | recarrega e relê os ícones |
+| `Tab` | próxima aba — desligado, só `Ctrl+Tab` troca |
 | `Ctrl+Tab` / `Ctrl+Shift+Tab` | próxima / aba anterior |
 | `Ctrl+1` … `Ctrl+9` | vai direto para uma aba |
 | `Ctrl+O` | troca a pasta da aba ativa |
@@ -187,10 +190,28 @@ caminho quando o hub está residente e escondido.
 <img src="docs/settings.png" width="760" alt="Configuração do FolderHub">
 </p>
 
-Não existe botão de OK: cada mudança é gravada e aplicada na hora. Adicione um hub
-e a aba aparece; aumente o limite de colunas e a janela se redimensiona enquanto
-você olha. A exceção é o arquivo de tema, que é lido na abertura — a própria tela
-avisa isso onde você o escolhe.
+Cinco seções. **Hubs** é a lista de pastas — adicionar, renomear, reordenar ou
+remover até oito, mais a escolha entre uma pasta e várias. **Geral** cobre iniciar
+com o Windows, a bandeja e quando o hub se fecha sozinho. **Atalhos** é o atalho
+global e o que as teclas fazem dentro da janela. **Aparência** tem o tema, a
+transparência, a densidade dos cards e os detalhes menores — caminho, contagem,
+menos animação, limite de colunas, ordenação, arquivo de tema. **Sobre** traz
+versão, licença e onde moram a configuração e o registro.
+
+Nada espera um OK. Cada mudança é gravada e aplicada na hora — o botão no canto
+só fecha a janela. Adicione um hub e a aba aparece; aumente o limite de colunas e
+a janela se redimensiona enquanto você olha; arraste a transparência e a
+superfície acompanha.
+
+Duas coisas são lidas na abertura, e a tela avisa isso onde você as escolhe: o
+arquivo de tema e a escolha entre claro e escuro — essa se oferece para reiniciar
+o app por você. E três linhas aparecem desabilitadas em vez de escondidas, porque
+escondê-las só adiaria a mesma pergunta: um tema que segue o do Windows, um idioma
+de interface que não seja português, e atualização automática.
+
+<p align="center">
+<img src="docs/appearance.png" width="760" alt="Aparência: tema, transparência e densidade dos cards">
+</p>
 
 O atalho global não é digitado, é gravado: clique no campo e pressione a
 combinação. Ele recusa uma sem modificador porque o Windows recusa também, e
@@ -217,6 +238,18 @@ mão: o app observa e relê quando ele muda.
   "closeOnBlur": false,        // some quando perde o foco
   "sort": "Manual",            // Manual | NameAsc | NameDesc | Recent
   "maxColumns": 7,
+
+  "singleFolder": false,       // uma pasta só, sem faixa de abas; as outras ficam na config
+  "rememberLastHub": true,     // reabre na aba em que você estava
+  "lastHub": 0,                // qual era ela, gravado ao trocar
+  "tabSwitchesHub": true,      // Tab sozinho troca de hub; desligado, só Ctrl+Tab
+  "showPath": true,            // o caminho da pasta como subtítulo
+  "showCount": true,           // "N atalhos" no rodapé
+
+  "themeMode": "Dark",         // Dark | Light
+  "transparency": 30,          // 0 opaca … 100, quanto do desktop aparece atrás
+  "density": "Default",        // Compact | Default | Large
+  "reduceMotion": false,       // corta as entradas e transições
   "themeFile": null            // caminho de um .xaml que sobrescreve o tema
 }
 ```
@@ -281,16 +314,28 @@ dimensiona, sem recompilar:
 ignorado, não derruba o app. O arquivo é carregado como XAML, então trate com a
 mesma confiança da config que aponta para ele.
 
+O tema claro é a mesma ideia aplicada ao próprio app: `Themes/Light.xaml`
+redefine essas chaves e mais nada, carregado por cima do escuro quando o
+`themeMode` é `Light`. Um `themeFile` seu continua vencendo, porque entra depois.
+
+Densidade e transparência são a exceção ao "lido na abertura". Elas reescrevem as
+chaves no dicionário vivo da aplicação, e é por isso que quem depende delas lê por
+`DynamicResource` — `StaticResource` resolve uma vez e nunca mais olha. Os valores
+do tema são guardados antes, então voltar para a densidade padrão devolve o que o
+seu tema pediu, e não o número embutido no app.
+
 ## Design
 
 A interface segue um sistema monocromático e frio, **sem cor de destaque** — toda a
-hierarquia vem de branco em opacidades diferentes sobre o acrílico.
+hierarquia vem de branco em opacidades diferentes sobre o acrílico. O tema claro
+inverte a tinta em vez de trazer uma paleta: superfície quase branca, os mesmos
+cinzas, `#14161A` nas mesmas opacidades.
 
 | | |
 |---|---|
 | superfície | `rgba(26,28,32,0.86)` sobre acrílico, borda `rgba(255,255,255,0.07)` |
-| card | `rgba(255,255,255,0.028)` · hover `0.065` · selecionado `0.075` + anel de 2px |
-| bloco do ícone | `#22252A` → `#282C32` → `#2C3138`, 44px, raio 12 |
+| card | `rgba(255,255,255,0.03)` · hover `0.067` · selecionado `0.075` + anel |
+| bloco do ícone | `#22252A`, 40px num card de 160×118 — 32 e 48 nas outras densidades |
 | texto | `#EEF1F4` em 100 / 88 / 58 / 42% |
 | transição | 150 ms em fundo e borda — sem deslocamento, sem brilho |
 | tipografia | Manrope 400/500/600 · JetBrains Mono nos metadados |
@@ -323,6 +368,7 @@ app/src/FolderHub/
   Themes/
     HubTheme.xaml           cor, forma, tipografia e medida
     HubControls.xaml        os modelos — sem literal, só tokens
+    Light.xaml              as mesmas chaves, claras — carregadas sobre o escuro
   Controls/                 os controles da casa: card, aba, ícone, tecla,
                             espaçamento e movimento
   Services/
@@ -339,6 +385,9 @@ app/src/FolderHub/
     TrayIcon.cs             Shell_NotifyIcon
     SingleInstance.cs       mutex + mensagem para a instância que já roda
     WindowEffects.cs        acrílico, cantos arredondados, modo escuro
+    LiveTheme.cs            tema, densidade e transparência sem reiniciar
+    CardDensity.cs          os três tamanhos de card, nos pixels que o layout precisa
+    ThemeMode.cs            escuro ou claro
     Log.cs                  log em arquivo, para falha engolida deixar rastro
   Interop/Native.cs         DWM, Shell, GDI, user32
 app/tests/FolderHub.Tests/  xUnit
@@ -376,10 +425,16 @@ Decisões que valem citar:
 dotnet test app/FolderHub.sln
 ```
 
-66 testes sobre a lógica pura: o que o scanner recolhe, os quatro modos de ordenação
-(incluindo ordenação natural, para `Item2` vir antes de `Item10`), o renomeio da ordem
-manual com o caso de colisão, o parser do atalho, a migração da config de pasta única
-para abas, a matemática das colunas, a busca sem acento e o encurtamento de caminho.
+96 testes. A maioria cobre a lógica pura: o que o scanner recolhe, os quatro modos de
+ordenação (incluindo ordenação natural, para `Item2` vir antes de `Item10`), o renomeio
+da ordem manual com o caso de colisão, o parser do atalho — percorrendo o teclado
+inteiro, porque o `HotKeyText` escrever o que o `GlobalHotKey` não lê falha calado —, a
+migração da config de pasta única para abas, a matemática das colunas, a busca sem
+acento e o encurtamento de caminho.
+
+O resto é smoke test do que o compilador não vê: os dicionários de recurso e os
+modelos de janela carregando de verdade, nos dois temas. Um `StaticResource` apontando
+para uma chave que não existe mais compila numa boa e estoura quando a janela abre.
 
 ## Por que não um serviço do Windows?
 

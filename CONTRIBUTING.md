@@ -9,7 +9,7 @@ else the app uses ships with Windows.
 git clone https://github.com/Rudhery/FolderHub.git
 cd FolderHub
 
-dotnet test app/FolderHub.sln     # 66 tests, under a second
+dotnet test app/FolderHub.sln     # 96 tests, about a second
 cd app
 dotnet run --project src/FolderHub
 ```
@@ -39,8 +39,15 @@ app/src/FolderHub/
   Models/        AppItem, HubTab
   Interop/       every P/Invoke, in one file
   MainWindow.*   the window, split by concern (tabs, reorder, drag & drop, tray)
+  Views/         the windows themselves, over the shared HubWindow shell
+  Controls/      the design layer: real controls with a default style
+  Themes/        every colour, measurement and template — tokens, no literals
 app/tests/       xUnit, over the Services
 ```
+
+A new screen should be able to say `<hub:HubCard Variant="Raised" />` and get
+the design for free. If you need a colour or a size, add a key to `HubTheme.xaml`
+and use it — a literal in a template is how two screens start drifting apart.
 
 If you find yourself adding logic to `MainWindow`, check whether it can be a
 pure function in `Services` instead. That is where the tests can reach it, and
@@ -71,7 +78,12 @@ another file's current name.
 
 ## Verifying UI behaviour
 
-There is no UI test harness. Behaviour that only exists in a real window — the
-global hotkey, drag-to-reorder, tab switching — has been verified by driving the
-app with PowerShell and Win32 calls, then reading `folderhub.log` and comparing
-screenshots. If you change one of those, say in the PR what you actually ran.
+`WindowSmokeTests` loads the resource dictionaries and window templates for real,
+in both themes, because a `StaticResource` pointing at a key that no longer exists
+compiles perfectly and throws when the window opens. That is as far as the tests
+go into the UI: they prove a window can be built, not that it behaves.
+
+Behaviour that only exists in a real window — the global hotkey, drag-to-reorder,
+tab switching — has been verified by driving the app with PowerShell and Win32
+calls, then reading `folderhub.log` and comparing screenshots. If you change one
+of those, say in the PR what you actually ran.

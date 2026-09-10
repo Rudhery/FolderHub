@@ -2,7 +2,7 @@
 
 Notable changes, newest first. Dates are the day the version was cut.
 
-## [Unreleased]
+## [1.1.0] — 2026-09-10
 
 ### The main window, restyled
 
@@ -11,8 +11,7 @@ Notable changes, newest first. Dates are the day the version was cut.
 - Tabs became capsules carrying a small tile and the shortcut count, with a
   `Tab` hint on the right. `Tab` on its own now switches hubs.
 - Shorter cards (118px) with a 40px tile; the selected ring went to 3px.
-- Header buttons at 28px, plus a settings button — it opens the config folder
-  until the settings screen exists.
+- Header buttons at 28px, plus a settings button.
 - The footer says which hub you are in.
 - The grid now ends on a whole row. Cutting mid-row raised a scrollbar over a
   few leftover pixels and left half a row against the footer; the scrollbar also
@@ -24,10 +23,11 @@ Reachable from the gear in the header, and from the tray menu — which is the w
 in when the hub is resident and hidden.
 
 - Five sections: Hubs, General, Shortcuts, Appearance, About.
-- No OK button. Every change is written and applied at once: it edits the same
-  `HubConfig` the app runs on and saves, and saving already tells the hub to
-  reconcile. Adding a hub grows the tab strip; raising the column limit resizes
-  the window while you watch.
+- Nothing waits for an OK; the button in the corner only closes the window. Every
+  change is written and applied at once: it edits the same `HubConfig` the app
+  runs on and saves, and saving already tells the hub to reconcile. Adding a hub
+  grows the tab strip; raising the column limit resizes the window while you
+  watch.
 - Hubs can be added, renamed, reordered and removed, up to eight — past that the
   tab strip stops fitting. Clearing a name goes back to the folder's own, so
   renaming it in Explorer keeps showing through.
@@ -61,6 +61,64 @@ than how it is drawn.
   is gone.
 - `HubGlyph` names the icons, replacing raw codepoints and a font family
   repeated at every use.
+
+### A light theme, and appearance that applies live
+
+- `Themes/Light.xaml` redefines the theme keys and nothing else, loaded over the
+  dark theme when `themeMode` is `Light`. A `themeFile` of your own still wins,
+  because it is loaded last. The light theme inverts the ink rather than bringing
+  a palette: near-white surface, the same greys, `#14161A` at matching opacities.
+- The theme is picked up at startup, not swapped under a live window: a running
+  hub has already resolved brushes into visuals that a dictionary swap does not
+  reach. The screen says so, and offers to restart the app for you — it comes
+  back on the Appearance section it left, through `--foreground --appearance`.
+- A system theme that follows Windows is shown disabled rather than hidden.
+- The DWM backdrop follows the theme. Leaving dark mode on under the light theme
+  left the glass white with a grey halo around it.
+- **Three card densities** — compact, default, large. The numbers live in
+  `CardDensity` rather than the theme, because the code that sizes the window
+  needs them before anything is drawn. The label keeps two lines in all three, so
+  a long name cannot change the card's height with the density.
+- **Transparency as a slider**, 0 to 100. Windows acrylic exposes no level, so
+  this is the opacity of the surface the app paints over it.
+- **Reduce motion**, which drops the entry and transition animations.
+- Density and transparency, unlike the theme, do reach what is already on screen:
+  `LiveTheme` rewrites their keys in the live resource dictionary — and the
+  elements that read them use `DynamicResource`. The theme's own values are
+  remembered on the first call, so returning to Default restores what a theme
+  file asked for rather than the number built into the app.
+
+### The settings screen, second pass
+
+- `HubGroup` — a titled block of rows with one line of explanation. The design
+  repeats that structure eight times; written by hand it was eight chances for
+  the spacing to drift.
+- The window is genuinely round now. It asks for a 22px corner, and with the DWM
+  rounding at 8 a dark wedge was left outside the arc. `HubWindow` takes an
+  `acrylic` flag: with it off the window is really transparent and the content's
+  own border defines the shape. Its surface is 92% opaque, so there was almost no
+  acrylic showing through anyway — and the drop shadow the design asks for comes
+  back with it.
+- `HubKey` carries its own radius: the same key is small in the hub's hints and
+  larger in settings, where it is the main element of the row.
+- The tray menu and the header gear can open straight into Appearance.
+- Language and automatic updates are shown disabled rather than hidden: the
+  interface is Portuguese-only for now, and there is no update channel yet.
+
+### Behaviour worth configuring
+
+- **One folder or several** — a working mode, not a removal: the other folders
+  stay in the config, they just stop being shown.
+- **Reopen on the hub you were in**, remembered as you switch.
+- **Bare `Tab` switches hubs**, and can be turned off so only `Ctrl+Tab` does.
+- **The folder path and the shortcut count** can each be hidden.
+
+### Tests
+
+- Smoke tests over what the compiler does not check: the resource dictionaries
+  and the window templates loading, in both themes. A `StaticResource` pointing
+  at a key that no longer exists compiles perfectly and throws when the window
+  opens. 66 tests to 96.
 
 ### Fixed
 
@@ -123,5 +181,5 @@ First release.
   size without recompiling.
 - Failures are written to `%APPDATA%\FolderHub\folderhub.log`.
 
-[Unreleased]: https://github.com/Rudhery/FolderHub/compare/v1.0.0...HEAD
+[1.1.0]: https://github.com/Rudhery/FolderHub/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Rudhery/FolderHub/releases/tag/v1.0.0

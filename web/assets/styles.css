@@ -165,6 +165,7 @@ ul, ol { padding: 0; list-style: none; }
   /* sem filter: blur() de propósito — o gradiente radial já é suave, e o blur
      obrigava a re-rasterizar um elemento de 900x620 em animação infinita */
   background: radial-gradient(50% 50% at 50% 50%, rgba(180, 204, 228, 0.1) 0%, rgba(180, 204, 228, 0) 70%);
+  filter: blur(10px);
   will-change: transform;
   animation: drift 9s ease-in-out infinite alternate;
 }
@@ -275,6 +276,8 @@ ul, ol { padding: 0; list-style: none; }
   color: var(--text-60);
 }
 
+.nav__menu { display: none; }
+
 .pill {
   display: inline-flex;
   align-items: center;
@@ -348,6 +351,41 @@ ul, ol { padding: 0; list-style: none; }
   animation: rise 800ms var(--ease) 190ms both;
 }
 
+.hero__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+  animation: rise 800ms var(--ease) 280ms both;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: transform 180ms var(--ease), border-color 180ms ease, background 180ms ease;
+}
+.button:hover { transform: translateY(-2px); }
+.button--primary {
+  color: #101317;
+  background: #e8eef3;
+  border: 1px solid #f4f7f9;
+  box-shadow: 0 12px 28px -16px rgba(232, 238, 243, 0.8);
+}
+.button--primary:hover { color: #101317; background: #ffffff; }
+.button--quiet {
+  gap: 8px;
+  color: var(--text-72);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.025);
+}
+.button--quiet:hover { color: var(--text); border-color: var(--raised-line-hover); background: rgba(255, 255, 255, 0.06); }
+
 @keyframes rise {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
@@ -366,6 +404,7 @@ ul, ol { padding: 0; list-style: none; }
   position: absolute;
   inset: 8% 20% -6%;
   background: radial-gradient(50% 50% at 50% 50%, rgba(150, 178, 205, 0.14) 0%, rgba(150, 178, 205, 0) 70%);
+  filter: blur(24px);
   pointer-events: none;
 }
 
@@ -380,12 +419,9 @@ ul, ol { padding: 0; list-style: none; }
   box-shadow:
     0 50px 90px -34px rgba(0, 0, 0, 0.9),
     0 1px 0 0 rgba(255, 255, 255, 0.06) inset;
-  /*
-     Sem backdrop-filter aqui. No aplicativo o acrílico borra a área de trabalho;
-     nesta página atrás da janela só existe o fundo chapado, então o blur não
-     mostra nada e ainda obriga a re-rasterizar a cada quadro do paralaxe.
-     Na barra do topo ele fica, porque lá o conteúdo passa por baixo de verdade.
-  */
+  backdrop-filter: blur(28px) saturate(130%);
+  -webkit-backdrop-filter: blur(28px) saturate(130%);
+  /* A janela segue o material acrylic especificado no handoff visual. */
 }
 
 .mock__head {
@@ -398,11 +434,40 @@ ul, ol { padding: 0; list-style: none; }
 .mock__title { display: flex; flex-direction: column; gap: 3px; }
 .mock__name { font-size: 13.5px; font-weight: 600; }
 .mock__hint { font-size: 12px; color: rgba(238, 241, 244, 0.44); }
-.mock__close { font-size: 12px; color: var(--text-35); }
+.mock__tools { display: flex; align-items: center; gap: 13px; color: var(--text-50); }
+.mock__icon { display: block; width: 13px; height: 13px; stroke-width: 1.55; }
+
+.mock__search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 36px;
+  padding: 0 9px 0 12px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: var(--text-50);
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.035);
+}
+.mock__search-icon { font-size: 18px; line-height: 1; color: var(--text-50); }
+.mock__search kbd {
+  margin-left: auto;
+  padding: 3px 7px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-50);
+  font: 10px 'JetBrains Mono', monospace;
+}
+.mock__tabs { display: flex; gap: 7px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.mock__tab { padding: 7px 11px; border: 1px solid transparent; border-radius: 999px; color: var(--text-50); font-size: 10.5px; }
+.mock__tab b { margin-left: 4px; color: var(--text-45); font: 10px 'JetBrains Mono', monospace; }
+.mock__tab--active { color: #ffffff; background: #1d2025; border-color: rgba(255, 255, 255, 0.12); }
+.mock__tab--active b { color: #dbe4ec; }
 
 .mock__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -438,6 +503,7 @@ ul, ol { padding: 0; list-style: none; }
 .glyph--circle { border-radius: 50%; border: 2.5px solid var(--glyph); }
 .glyph--square { border-radius: 4px; background: var(--bar); }
 .glyph--outline { border-radius: 3px; border: 2.5px solid var(--glyph); }
+.glyph--diamond { border-radius: 3px; border: 2.5px solid var(--glyph); transform: rotate(45deg) scale(.82); }
 
 /* a seleção passeia pelos três cards, como no app */
 .card--a { animation: cycle 6s ease-in-out infinite; }
@@ -446,6 +512,9 @@ ul, ol { padding: 0; list-style: none; }
 .card--a .card__tile { animation: cycle-tile 6s ease-in-out infinite; }
 .card--b .card__tile { animation: cycle-tile 6s ease-in-out -4s infinite; }
 .card--c .card__tile { animation: cycle-tile 6s ease-in-out -2s infinite; }
+.card--d { animation: cycle 6s ease-in-out -1s infinite; }
+.card--d .card__tile { animation: cycle-tile 6s ease-in-out -1s infinite; }
+.card--d .card__label { animation: cycle-label 6s ease-in-out -1s infinite; }
 .card--a .card__label { animation: cycle-label 6s ease-in-out infinite; }
 .card--b .card__label { animation: cycle-label 6s ease-in-out -4s infinite; }
 .card--c .card__label { animation: cycle-label 6s ease-in-out -2s infinite; }
@@ -525,9 +594,10 @@ ul, ol { padding: 0; list-style: none; }
   border-radius: 16px;
   background: var(--raised);
   border: 1px solid var(--raised-line);
-  transition: border-color 180ms ease, background 180ms ease;
+  transition: transform 300ms var(--ease), border-color 180ms ease, background 180ms ease;
 }
 .step:hover {
+  transform: translateY(-4px);
   background: var(--raised-hover);
   border-color: var(--raised-line-hover);
 }
@@ -552,9 +622,13 @@ ul, ol { padding: 0; list-style: none; }
   border-radius: 16px;
   background: var(--card);
   border: 1px solid var(--card-line);
-  transition: border-color 180ms ease;
+  transition: transform 300ms var(--ease), border-color 180ms ease, background 180ms ease;
 }
-.feature:hover { border-color: var(--card-line-hover); }
+.feature:hover {
+  transform: translateY(-4px);
+  border-color: var(--card-line-hover);
+  background: rgba(255, 255, 255, 0.045);
+}
 
 .feature__title { font-size: 13.5px; font-weight: 600; }
 .feature__text { font-size: 12.5px; line-height: 1.55; color: var(--text-58); }
@@ -615,17 +689,36 @@ ul, ol { padding: 0; list-style: none; }
   .hero__badge { align-self: flex-start; font-size: 10px; }
   .hero__title { font-size: 33px; line-height: 1.12; letter-spacing: -0.03em; text-wrap: pretty; }
   .hero__sub { font-size: 14.5px; }
+  .hero__actions { align-items: stretch; flex-direction: column; width: 100%; }
+  .button { width: 100%; }
 
   .mock__window { padding: 24px 22px 18px; border-radius: 20px; }
+  .mock__window { padding: 24px 20px 18px; }
   .mock__head { gap: 16px; margin-bottom: 20px; }
   .mock__name { font-size: 13px; }
   .mock__hint { font-size: 11.5px; }
-  .mock__grid { gap: 8px; }
-  .card { gap: 11px; padding: 18px 6px 14px; border-radius: 13px; }
-  .card__tile { width: 38px; height: 38px; border-radius: 11px; }
-  .card__label { font-size: 11.5px; }
-  .glyph { width: 14px; height: 14px; }
-  .mock__foot { margin-top: 18px; padding-top: 14px; font-size: 10px; }
+  .mock__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .card { gap: 10px; padding: 16px 6px 12px; border-radius: 13px; }
+  .card__tile { width: 34px; height: 34px; border-radius: 10px; }
+  .card__label { font-size: 11px; }
+  .glyph { width: 12px; height: 12px; }
+  .mock__foot { margin-top: 14px; padding-top: 12px; font-size: 10px; }
+
+  .nav__links .pill { display: inline-flex; }
+  .nav__menu {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+  }
+  .nav__menu span { width: 13px; height: 1.5px; border-radius: 1px; background: rgba(238, 241, 244, 0.8); }
 
   .section { gap: 22px; padding: 52px 0; }
   .eyebrow { font-size: 10px; }
@@ -717,4 +810,8 @@ ul, ol { padding: 0; list-style: none; }
   }
   .card--a .card__tile { background-color: #2c3138; }
   .card--a .card__label { color: #ffffff; }
+
+  .step:hover,
+  .feature:hover,
+  .card:hover { transform: none; }
 }
