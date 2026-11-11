@@ -4,6 +4,8 @@ Notable changes, newest first. Dates are the day the version was cut.
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-11-11
+
 ### Search-first layout
 
 - **The search line is the top of the window.** Title and path rows are gone;
@@ -279,6 +281,7 @@ First release.
   size without recompiling.
 - Failures are written to `%APPDATA%\FolderHub\folderhub.log`.
 
-[Unreleased]: https://github.com/Rudhery/FolderHub/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/Rudhery/FolderHub/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/Rudhery/FolderHub/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/Rudhery/FolderHub/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Rudhery/FolderHub/releases/tag/v1.0.0
