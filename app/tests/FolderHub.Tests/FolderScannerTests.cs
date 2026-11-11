@@ -47,13 +47,14 @@ public class FolderScannerTests
     }
 
     [Fact]
-    public void Manual_sort_follows_the_numeric_prefix()
+    public void Old_numeric_prefixes_become_the_manual_order()
     {
         using var folder = new TempFolder();
         folder.Add("03 - Zebra.lnk", "01 - alpha.lnk", "02 - Item10.lnk", "04 - Item2.lnk");
 
+        ManualOrder.MigrateLegacyPrefixes(folder.Path);
         var items = FolderScanner.Scan(folder.Path);
-        FolderScanner.Sort(items, SortMode.Manual);
+        FolderScanner.Sort(items, SortMode.Manual, folder.Path);
 
         Assert.Equal(["alpha", "Item10", "Zebra", "Item2"], items.Select(i => i.Name));
     }

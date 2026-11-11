@@ -89,4 +89,62 @@ public class HotKeyTextTests
         // O valor que sai de fábrica em HubConfig.HotKey.
         Assert.True(GlobalHotKey.TryParse("Ctrl+Alt+Space", out _, out _));
     }
+
+    // ------------------------------------------------------- teclas na tela
+
+    [Theory]
+    [InlineData("Ctrl+Alt+Space", "Ctrl|Alt|Espaço")]
+    [InlineData("Win+Shift+H", "Win|Shift|H")]
+    [InlineData("Alt+Q", "Alt|Q")]
+    [InlineData("Ctrl+Alt+Left", "Ctrl|Alt|←")]
+    public void parts_quebra_a_combinacao_com_o_nome_de_tela(string spec, string expected)
+        => Assert.Equal(expected, string.Join("|", HotKeyText.Parts(spec)));
+
+    /// <summary>
+    /// O que não é combinação não vira tecla desenhada — é por este vazio que o
+    /// campo de captura decide mostrar um recado.
+    /// </summary>
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("Ctrl+Alt+…")]
+    [InlineData("pressione a combinação")]
+    [InlineData("Space")]
+    public void parts_ignora_o_que_nao_e_combinacao(string text)
+        => Assert.Empty(HotKeyText.Parts(text));
+
+    /// <summary>
+    /// O nome de tela é de mão única, e o teste mostra por quê: "Espaço" o
+    /// parser até aceita, porque ele é leniente de propósito com config editada
+    /// à mão, mas a seta não existe como nome de tecla em lugar nenhum. Gravar
+    /// o que o <see cref="HotKeyText.Parts"/> devolve daria um atalho que some
+    /// sem erro na próxima abertura.
+    /// </summary>
+    [Fact]
+    public void o_nome_de_tela_nao_serve_para_gravar()
+    {
+        Assert.Equal("Ctrl|Alt|←", string.Join("|", HotKeyText.Parts("Ctrl+Alt+Left")));
+        Assert.False(GlobalHotKey.TryParse("Ctrl+Alt+←", out _, out _));
+
+        // Quem grava é o TryFormat, e o que ele escreve o parser lê de volta.
+        Assert.True(HotKeyText.TryFormat(ModifierKeys.Control | ModifierKeys.Alt, Key.Left, out string spec));
+        Assert.Equal("Ctrl+Alt+Left", spec);
+        Assert.True(GlobalHotKey.TryParse(spec, out _, out _));
+    }
+
+    /// <summary>
+    /// A leniência do parser com acento é intencional: o arquivo é editável à
+    /// mão, e "Espaço" é o que se escreveria. Fica um teste para que tirá-la
+    /// seja uma decisão e não um efeito colateral.
+    /// </summary>
+    [Fact]
+    public void o_parser_aceita_espaco_escrito_a_mao()
+    {
+        Assert.True(GlobalHotKey.TryParse("Ctrl+Alt+Space", out _, out uint space));
+        Assert.True(GlobalHotKey.TryParse("Ctrl+Alt+Espaço", out _, out uint acentuado));
+        Assert.True(GlobalHotKey.TryParse("Ctrl+Alt+espaco", out _, out uint semAcento));
+
+        Assert.Equal(space, acentuado);
+        Assert.Equal(space, semAcento);
+    }
 }

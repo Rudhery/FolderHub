@@ -77,38 +77,22 @@ public partial class MainWindow
         if (_dragging is null || !e.Data.GetDataPresent(DragFormat)) return;
         e.Handled = true;
 
-        // O caminho muda no disco, o nome não: é por ele que reencontramos o card.
-        string moved = _dragging.Name;
+        string moved = _dragging.Path;
 
         PersistOrder([.. _visible]);
         _dragging = null;
 
-        // Reler é o que mantém caminhos, ordem e ícones coerentes.
         Reload(resize: false);
 
-        int index = _visible.ToList().FindIndex(i => i.Name == moved);
+        int index = _visible.ToList().FindIndex(i => string.Equals(i.Path, moved, StringComparison.OrdinalIgnoreCase));
         if (index >= 0) MoveTo(index);
     }
 
-    /// <summary>Grava a ordem renomeando os arquivos com prefixo numérico.</summary>
-    private void PersistOrder(IReadOnlyList<AppItem> ordered)
-    {
-        bool watching = _watcher?.EnableRaisingEvents ?? false;
-        if (_watcher != null) _watcher.EnableRaisingEvents = false;
-
-        try
-        {
-            foreach (var (from, to) in ManualOrder.Apply(ordered))
-            {
-                if (_iconCache.Remove(from, out var icon)) _iconCache[to] = icon;
-            }
-        }
-        finally
-        {
-            _reloadDebounce.Stop();
-            if (_watcher != null) _watcher.EnableRaisingEvents = watching;
-        }
-    }
+    /// <summary>
+    /// Grava a ordem no arquivo interno. Os arquivos da pasta ficam como estão:
+    /// renomeá-los é o que fazia uma atualização de app duplicar o atalho.
+    /// </summary>
+    private void PersistOrder(IReadOnlyList<AppItem> ordered) => ManualOrder.Save(_folder, ordered);
 
     // ----------------------------------------------------------- menu de ordem
 

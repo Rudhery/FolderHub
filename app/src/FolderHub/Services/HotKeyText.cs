@@ -59,6 +59,40 @@ public static class HotKeyText
     }
 
     /// <summary>
+    /// A combinação quebrada nas teclas, com o nome que se mostra na tela.
+    ///
+    /// É um caminho de mão única, e de propósito: aqui "Space" vira "Espaço",
+    /// que é o que o teclado tem escrito, mas nada disso volta para o arquivo —
+    /// quem grava é o <see cref="TryFormat"/>, e o que ele escreve o
+    /// <see cref="GlobalHotKey.TryParse"/> precisa saber ler. Traduzir dos dois
+    /// lados quebraria justamente o par que o resto desta classe protege.
+    ///
+    /// Devolve vazio para o que não é combinação, e é assim que o campo de
+    /// captura decide entre desenhar teclas ou mostrar um recado.
+    /// </summary>
+    public static string[] Parts(string? spec)
+    {
+        if (string.IsNullOrWhiteSpace(spec)) return [];
+        if (!GlobalHotKey.TryParse(spec, out _, out _)) return [];
+
+        return [.. spec.Split('+', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                       .Select(Caption)];
+    }
+
+    /// <summary>O nome de uma tecla como se lê nela, não como se grava.</summary>
+    private static string Caption(string name) => name switch
+    {
+        "Space" => "Espaço",
+        "Enter" => "Enter",
+        "Win" => "Win",
+        "Left" => "←",
+        "Right" => "→",
+        "Up" => "↑",
+        "Down" => "↓",
+        _ => name
+    };
+
+    /// <summary>
     /// A combinação inteira, ou false se ela não serve como atalho global. A
     /// validação final é o próprio <see cref="GlobalHotKey.TryParse"/>: assim
     /// nada é aceito aqui que fosse ser recusado na hora de registrar.

@@ -39,9 +39,20 @@ public partial class MainWindow
         }
 
         TabStrip.ItemsSource = _tabs;
-        TabRow.Visibility = !App.Config.SingleFolder && _tabs.Count > 1
-            ? Visibility.Visible
-            : Visibility.Collapsed;
+        UpdateRail();
+    }
+
+    /// <summary>
+    /// A barra lateral: uma cor por hub, pela posição. Some no modo de pasta
+    /// única, e aí a engrenagem dos ajustes vai para a linha da busca.
+    /// </summary>
+    private void UpdateRail()
+    {
+        for (int i = 0; i < _tabs.Count; i++) _tabs[i].Swatch = HubPalette.For(i);
+
+        bool rail = !App.Config.SingleFolder;
+        Rail.Visibility = rail ? Visibility.Visible : Visibility.Collapsed;
+        InlineSettings.Visibility = rail ? Visibility.Collapsed : Visibility.Visible;
     }
 
     /// <summary>Maior aba, para a janela caber em todas sem redimensionar na troca.</summary>
@@ -135,9 +146,8 @@ public partial class MainWindow
         tab.Count = FolderScanner.CountSupported(path);
         _tabs.Add(tab);
 
-        TabRow.Visibility = !App.Config.SingleFolder && _tabs.Count > 1
-            ? Visibility.Visible
-            : Visibility.Collapsed;
+        UpdateRail();
+
         PersistTabs();
 
         ActivateTab(tab, resize: true, animate: true);
@@ -150,9 +160,8 @@ public partial class MainWindow
 
         int index = _tabs.IndexOf(tab);
         _tabs.Remove(tab);
-        TabRow.Visibility = !App.Config.SingleFolder && _tabs.Count > 1
-            ? Visibility.Visible
-            : Visibility.Collapsed;
+        UpdateRail();
+
         PersistTabs();
 
         if (ReferenceEquals(tab, _tab))

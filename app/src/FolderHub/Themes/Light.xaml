@@ -16,6 +16,12 @@
     <SolidColorBrush x:Key="Glyph" Color="#5A6B7D" />
     <SolidColorBrush x:Key="GlyphHover" Color="#3D4753" />
     <SolidColorBrush x:Key="GlyphSelected" Color="#DBE4EC" />
+    <SolidColorBrush x:Key="Accent" Color="#2563EB" />
+    <SolidColorBrush x:Key="AccentSoft" Color="#1F3B82F6" />
+    <SolidColorBrush x:Key="FillHover" Color="#0B14161A" />
+    <SolidColorBrush x:Key="FillQuiet" Color="#0714161A" />
+    <SolidColorBrush x:Key="RailBg" Color="#0814161A" />
+    <SolidColorBrush x:Key="Marker" Color="#14161A" />
     <SolidColorBrush x:Key="CardBg" Color="#0414161A" />
     <SolidColorBrush x:Key="CardBorder" Color="#1414161A" />
     <SolidColorBrush x:Key="CardBgHover" Color="#0D14161A" />
@@ -88,6 +94,8 @@
     <SolidColorBrush x:Key="SunkenBgStrong" Color="#0F14161A" />
     <SolidColorBrush x:Key="SunkenBorderStrong" Color="#2E14161A" />
     <SolidColorBrush x:Key="DashedBorder" Color="#2414161A" />
+    <SolidColorBrush x:Key="StepOn" Color="#D914161A" />
+    <SolidColorBrush x:Key="StepOff" Color="#2914161A" />
     <SolidColorBrush x:Key="GhostBorder" Color="#2914161A" />
     <SolidColorBrush x:Key="GhostText" Color="#BF14161A" />
     <SolidColorBrush x:Key="SegmentBg" Color="#0A14161A" />

@@ -2,7 +2,7 @@ namespace FolderHub.Services;
 
 public enum SortMode
 {
-    /// <summary>Ordem do nome do arquivo — é o que os prefixos "01 - " controlam.</summary>
+    /// <summary>Ordem arrastada no hub, guardada em order.json (fora da pasta).</summary>
     Manual,
     NameAsc,
     NameDesc,

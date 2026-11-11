@@ -15,7 +15,7 @@ public static partial class FolderScanner
         ".lnk", ".url", ".exe", ".bat", ".cmd", ".ps1", ".appref-ms", ".msc"
     };
 
-    /// <summary>Prefixo de ordenação manual: "01 - Steam.lnk" aparece como "Steam".</summary>
+    /// <summary>Prefixo numérico ("01 - Steam.lnk" aparece como "Steam"). Só para exibir: a ordem não vem mais dele.</summary>
     [GeneratedRegex(@"^\s*\d{1,3}\s*[-._)\]]\s*", RegexOptions.CultureInvariant)]
     private static partial Regex OrderPrefix();
 
@@ -97,7 +97,11 @@ public static partial class FolderScanner
         return items;
     }
 
-    public static void Sort(List<AppItem> items, SortMode mode)
+    /// <summary>
+    /// Ordena os itens. No modo manual a ordem vem do arquivo interno
+    /// (<see cref="ManualOrder"/>) da pasta <paramref name="folder"/>.
+    /// </summary>
+    public static void Sort(List<AppItem> items, SortMode mode, string? folder = null)
     {
         switch (mode)
         {
@@ -118,14 +122,15 @@ public static partial class FolderScanner
                 break;
 
             default:
-                // Nome do arquivo com o prefixo: é assim que "01 - ", "02 - " mandam.
-                items.Sort((a, b) => Natural(a.FileName, b.FileName));
+                // A ordem arrastada, guardada fora da pasta; o resto, por nome.
+                var order = folder is null ? [] : ManualOrder.Get(folder);
+                ManualOrder.Sort(items, order, Natural);
                 break;
         }
     }
 
     /// <summary>Ordenação natural, igual à do Explorer ("item2" antes de "item10").</summary>
-    private static int Natural(string a, string b)
+    public static int Natural(string a, string b)
     {
         try { return Native.StrCmpLogical(a, b); }
         catch { return string.Compare(a, b, StringComparison.OrdinalIgnoreCase); }

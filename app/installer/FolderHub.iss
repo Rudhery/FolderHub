@@ -7,10 +7,10 @@
 ;
 ; ou direto:
 ;
-;   ISCC.exe /DAppVersion=1.1.0 FolderHub.iss
+;   ISCC.exe /DAppVersion=1.2.0 FolderHub.iss
 
 #ifndef AppVersion
-  #define AppVersion "1.1.0"
+  #define AppVersion "1.2.0"
 #endif
 
 #define AppName "FolderHub"

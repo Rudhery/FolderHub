@@ -77,6 +77,42 @@ public class HubHotKeyBox : Control
     /// </summary>
     public string Display => (string)GetValue(DisplayProperty);
 
+    /// <summary>
+    /// Uma tecla da combinação, já sabendo se tem outra depois dela.
+    ///
+    /// O "+" entre as teclas vem daqui e não do modelo porque um
+    /// <c>ItemsControl</c> não sabe dizer qual item é o último — e um "+"
+    /// sobrando no fim da combinação é exatamente o tipo de detalhe que passa.
+    /// </summary>
+    public sealed record KeyCap(string Text, bool More);
+
+    private static readonly DependencyPropertyKey CapsPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(Caps), typeof(KeyCap[]), typeof(HubHotKeyBox),
+            new FrameworkPropertyMetadata(Array.Empty<KeyCap>()));
+
+    public static readonly DependencyProperty CapsProperty = CapsPropertyKey.DependencyProperty;
+
+    /// <summary>
+    /// As teclas da combinação, para o modelo que desenha uma por uma. Vazio
+    /// quando o que há para mostrar é um recado e não um atalho.
+    /// </summary>
+    public KeyCap[] Caps => (KeyCap[])GetValue(CapsProperty);
+
+    private static readonly DependencyPropertyKey ShowsKeysPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(ShowsKeys), typeof(bool), typeof(HubHotKeyBox),
+            new FrameworkPropertyMetadata(false));
+
+    public static readonly DependencyProperty ShowsKeysProperty = ShowsKeysPropertyKey.DependencyProperty;
+
+    /// <summary>
+    /// Tem tecla para desenhar. Existe como booleano porque gatilho de XAML não
+    /// sabe olhar a contagem de uma lista, e é ele que troca as teclas pelo
+    /// recado na tela de primeira execução.
+    /// </summary>
+    public bool ShowsKeys => (bool)GetValue(ShowsKeysProperty);
+
     private void UpdateDisplay()
     {
         string text = Pending.Length > 0 ? Pending
@@ -85,6 +121,16 @@ public class HubHotKeyBox : Control
                     : "nenhum";
 
         SetValue(DisplayPropertyKey, text);
+
+        // As teclas saem do atalho confirmado, nunca do pendente: enquanto a
+        // combinação está sendo segurada o texto é "Ctrl+Alt+…", que não é
+        // combinação nenhuma e não deve virar tecla desenhada.
+        string[] parts = Pending.Length > 0 || Capturing ? [] : HotKeyText.Parts(HotKey);
+        var caps = new KeyCap[parts.Length];
+        for (int i = 0; i < parts.Length; i++) caps[i] = new KeyCap(parts[i], i < parts.Length - 1);
+
+        SetValue(CapsPropertyKey, caps);
+        SetValue(ShowsKeysPropertyKey, caps.Length > 0);
     }
 
     // ---------------------------------------------------------------- captura

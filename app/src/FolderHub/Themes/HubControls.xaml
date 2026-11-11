@@ -18,6 +18,7 @@
     -->
 
     <svc:BoolToVisibilityConverter x:Key="BoolToVis" />
+    <svc:EmptyToCollapsedConverter x:Key="EmptyToCollapsed" />
 
     <!--
         ============ ÍCONE ============
@@ -1101,6 +1102,16 @@
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Fill" Property="Background" Value="{StaticResource AccentFillHover}" />
                         </Trigger>
+                        <!--
+                            Desabilitado ele perde o fundo em vez de só clarear:
+                            é o único elemento cheio da tela, e um retângulo
+                            branco apagado continua sendo o que o olho procura.
+                        -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Fill" Property="Background" Value="Transparent" />
+                            <Setter Property="Foreground" Value="{StaticResource TextFaint}" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -1491,6 +1502,128 @@
                         </Border.Effect>
                         <StackPanel IsItemsHost="True" />
                     </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <!--
+        ============ PRIMEIRA EXECUÇÃO ============
+    -->
+
+    <!--
+        Os traços de progresso. O atual é largo em vez de só mais claro: a
+        diferença de opacidade sozinha não se lê num traço de 4px de altura.
+    -->
+    <Style TargetType="{x:Type hub:HubSteps}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type hub:HubSteps}">
+                    <ItemsControl Focusable="False" ItemsSource="{TemplateBinding Marks}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <!--
+                                    O vão de 5px do design está fora da escala de
+                                    4, então fica literal aqui. Metade de cada
+                                    lado em vez de 5 à direita: dá o mesmo vão
+                                    entre traços sem sobrar um no fim.
+                                -->
+                                <Border x:Name="Dash"
+                                        Width="5"
+                                        Height="4"
+                                        Margin="2.5,0"
+                                        VerticalAlignment="Center"
+                                        Background="{StaticResource StepOff}"
+                                        CornerRadius="{StaticResource RadiusThumb}" />
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding}" Value="True">
+                                        <Setter TargetName="Dash" Property="Width" Value="16" />
+                                        <Setter TargetName="Dash" Property="Background" Value="{StaticResource StepOn}" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        O mesmo campo de captura da configuração, no tamanho da primeira
+        execução: aqui ele é o assunto da tela, não uma linha de ajuste, então
+        as teclas aparecem desenhadas uma a uma em vez de como texto.
+
+        Quando não há combinação para desenhar — em captura, ou recusada por
+        falta de modificador — a caixa mostra o recado que o controle decidiu.
+    -->
+    <Style x:Key="WelcomeHotKeyBox" TargetType="{x:Type hub:HubHotKeyBox}">
+        <Setter Property="Height" Value="Auto" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type hub:HubHotKeyBox}">
+                    <Border x:Name="Frame"
+                            Padding="14,20"
+                            Background="{StaticResource SunkenBgStrong}"
+                            BorderBrush="{StaticResource SunkenBorderStrong}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusRow}">
+                        <Grid>
+                            <TextBlock x:Name="Message"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       FontSize="{StaticResource SizeRowHint}"
+                                       Foreground="{StaticResource TextMeta}"
+                                       Text="{TemplateBinding Display}"
+                                       TextAlignment="Center" />
+                            <ItemsControl x:Name="Keys"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Focusable="False"
+                                          ItemsSource="{TemplateBinding Caps}"
+                                          Visibility="Collapsed">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <hub:HubKey Padding="10,6"
+                                                        VerticalAlignment="Center"
+                                                        FontSize="{StaticResource SizeRowHint}"
+                                                        Foreground="{StaticResource TextPrimary}"
+                                                        Radius="{StaticResource RadiusChip}"
+                                                        Text="{Binding Text}" />
+                                            <!--  o "+" separa, então o último não tem  -->
+                                            <TextBlock Margin="6,0"
+                                                       VerticalAlignment="Center"
+                                                       FontSize="{StaticResource SizeHint}"
+                                                       Foreground="{StaticResource TextFaint}"
+                                                       Text="+"
+                                                       Visibility="{Binding More, Converter={StaticResource BoolToVis}}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="ShowsKeys" Value="True">
+                            <Setter TargetName="Keys" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Message" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Capturing" Value="True">
+                            <Setter TargetName="Frame" Property="Background" Value="{StaticResource CardBgSelected}" />
+                            <Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource CardBorderSelected}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

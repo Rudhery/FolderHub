@@ -76,6 +76,24 @@
     <!--  anel externo de 3px: rgba(255,255,255,0.035)  -->
     <SolidColorBrush x:Key="CardRing" Color="#09FFFFFF" />
 
+    <!--
+        ============ HUB: BARRA LATERAL E SELEÇÃO ============
+        O layout com a busca no topo. A paleta continua fria e sem cor, com uma
+        exceção: o item escolhido. É a única coisa da tela que precisa ser achada
+        num relance, e branco translúcido sobre acrílico some.
+    -->
+    <SolidColorBrush x:Key="Accent" Color="#3B82F6" />
+    <!--  rgba(59,130,246,0.22)  -->
+    <SolidColorBrush x:Key="AccentSoft" Color="#383B82F6" />
+    <!--  sob o ponteiro: rgba(255,255,255,0.06)  -->
+    <SolidColorBrush x:Key="FillHover" Color="#0FFFFFFF" />
+    <!--  os cartões de Mais usados em repouso  -->
+    <SolidColorBrush x:Key="FillQuiet" Color="#09FFFFFF" />
+    <!--  barra lateral e barra de ações, um tom abaixo da superfície  -->
+    <SolidColorBrush x:Key="RailBg" Color="#1F000000" />
+    <!--  o tracinho do hub aberto  -->
+    <SolidColorBrush x:Key="Marker" Color="#F2F3F5" />
+
     <!--  ============ BLOCO DO ÍCONE ============  -->
 
     <SolidColorBrush x:Key="TileBg" Color="#22252A" />
@@ -197,6 +215,12 @@
     <!--  o contorno tracejado de "adicionar hub"  -->
     <SolidColorBrush x:Key="DashedBorder" Color="#24FFFFFF" />
 
+    <!--  traços de progresso da primeira execução  -->
+    <!--  rgba(219,228,236,0.85)  -->
+    <SolidColorBrush x:Key="StepOn" Color="#D9DBE4EC" />
+    <!--  rgba(255,255,255,0.16)  -->
+    <SolidColorBrush x:Key="StepOff" Color="#29FFFFFF" />
+
     <!--  botão fantasma  -->
     <SolidColorBrush x:Key="GhostBorder" Color="#1AFFFFFF" />
     <SolidColorBrush x:Key="GhostText" Color="#BFEEF1F4" />
@@ -293,8 +317,13 @@
         aqui redimensiona o hub junto.
     -->
 
-    <sys:Double x:Key="CardWidth">160</sys:Double>
-    <sys:Double x:Key="CardHeight">118</sys:Double>
-    <sys:Double x:Key="TileSize">40</sys:Double>
+    <sys:Double x:Key="CardWidth">104</sys:Double>
+    <sys:Double x:Key="CardHeight">108</sys:Double>
+    <sys:Double x:Key="TileSize">44</sys:Double>
+
+    <!--  a linha da busca, que agora é o topo da janela  -->
+    <sys:Double x:Key="SizeSearch">17</sys:Double>
+    <!--  "MAIS USADOS", "TODOS"  -->
+    <sys:Double x:Key="SizeEyebrow">10.5</sys:Double>
 
 </ResourceDictionary>

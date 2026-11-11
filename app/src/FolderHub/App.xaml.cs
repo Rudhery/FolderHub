@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Threading;
 using FolderHub.Models;
 using FolderHub.Services;
+using FolderHub.Views;
 
 namespace FolderHub;
 
@@ -117,7 +118,34 @@ public partial class App : Application
                     .Take(Config.SingleFolder ? 1 : int.MaxValue)
                     .Select(t => new HubTab { Path = t.Path, CustomName = t.Name })];
 
-        if (tabs.Count == 0)
+        // Primeira execução e pasta que sumiu são problemas diferentes, e antes
+        // caíam os dois no mesmo seletor de pasta. Quem nunca configurou nada
+        // precisa da instalação guiada; quem tem hub configurado num pen drive
+        // desconectado só precisa apontar outra pasta — receber as boas-vindas
+        // de novo diria que a configuração dele foi perdida.
+        bool guided = false;
+
+        if (tabs.Count == 0 && Config.Tabs.Count == 0)
+        {
+            guided = true;
+
+            var welcome = new WelcomeWindow();
+            welcome.ShowDialog();
+
+            if (!welcome.Completed || welcome.Folder is null)
+            {
+                Shutdown();
+                return;
+            }
+
+            // A janela já gravou a config inteira; aqui só se monta o hub com o
+            // que ela decidiu.
+            tabs.Add(new HubTab { Path = welcome.Folder });
+            background = Config.Background;
+            Background = background;
+            ShutdownMode = background ? ShutdownMode.OnExplicitShutdown : ShutdownMode.OnMainWindowClose;
+        }
+        else if (tabs.Count == 0)
         {
             string? chosen = AskForFolder();
             if (chosen == null)
@@ -128,6 +156,25 @@ public partial class App : Application
 
             tabs.Add(new HubTab { Path = chosen });
             Config.Tabs = [new TabConfig { Path = chosen }];
+            Config.Save();
+        }
+
+        // Depois de atualizar, o que mudou — uma vez, e nunca na primeira
+        // instalação de todas: ali quem acabou de falar foi a instalação
+        // guiada, e duas telas antes de o hub abrir seriam uma a mais.
+        //
+        // Quem atualiza de uma versão anterior ao seenVersion não tem registro,
+        // e não é primeira instalação: o hub dele já está configurado. É por
+        // isso que a decisão é aqui e não no ReleaseNotes — só aqui se sabe a
+        // diferença entre "não configurou nada" e "configurou antes deste
+        // campo existir".
+        if (!guided && ReleaseNotes.Any && !ReleaseNotes.AlreadySeen(Config.SeenVersion))
+        {
+            new WhatsNewWindow().ShowDialog();
+        }
+        else if (!ReleaseNotes.AlreadySeen(Config.SeenVersion))
+        {
+            Config.SeenVersion = Version;
             Config.Save();
         }
 

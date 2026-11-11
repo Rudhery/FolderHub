@@ -44,9 +44,9 @@ Não existe cadastro de app, nem banco de dados, nem lista de programas no códi
 **Colocou um atalho na pasta, aparece. Apagou, some.** A pasta que você já organiza no
 Explorer *é* a configuração, e o app fica de olho nela em tempo real.
 
-Essa restrição guia o projeto inteiro — inclusive a ordenação: arrastar um card renomeia
-os arquivos com prefixo `01 - `, `02 - `, então a ordem que você define no app é a mesma
-que aparece no Explorer, e vice-versa.
+Essa restrição guia o projeto inteiro — com uma exceção de propósito: a ordem que você arrasta
+fica num arquivo interno do app, e não no nome dos arquivos. Assim um app que se atualiza e
+recria o próprio atalho não gera duplicata.
 
 ## O que ele faz
 
@@ -57,7 +57,9 @@ que aparece no Explorer, e vice-versa.
 - **Ícones nítidos** — 256px pela Shell API, em vez dos 32px borrados que a maioria usa.
 - **Grade adaptativa** — colunas e tamanho da janela seguem a quantidade de atalhos.
 - **Três densidades de card** — compacto, padrão e grande; a janela acompanha.
-- **Digite para filtrar**, setas para navegar, `Enter` para abrir.
+- **A busca é o topo da janela** — digitou, a grade vira uma lista de resultados; setas e `Enter` para abrir.
+- **Barra lateral de hubs**, cada um com a sua cor, e **Mais usados**: os quatro apps que você mais abre, no alto.
+- **Barra de ações** — o app escolhido com Abrir e o menu `Ctrl+K` (administrador, mostrar na pasta, copiar caminho).
 - **Arraste para reordenar**, e a ordem é gravada na própria pasta.
 - **Arrastar e soltar** — solte uma pasta para trocar de hub, solte programas para adicionar.
 - **Abas** — várias pastas num hub só, cada uma carregada só quando você abre.
@@ -67,8 +69,10 @@ que aparece no Explorer, e vice-versa.
 ## Instalando
 
 Baixe o `FolderHub-Setup-x.y.z.exe` em [Releases](https://github.com/Rudhery/FolderHub/releases)
-e execute. A instalação é por usuário, então **não pede admin**, e oferece iniciar com o
-Windows para o atalho global estar sempre disponível.
+e execute. A instalação é por usuário, então **não pede admin**. A primeira execução
+passa por três passos — escolher a pasta que vira o hub, definir o atalho global e
+ver o que ele encontrou — e grava a configuração no fim, então desistir no meio não
+deixa nada para trás. Depois de atualizar, o app mostra o que mudou, uma vez.
 
 Ou compile você mesmo:
 
@@ -80,7 +84,7 @@ cd FolderHub\app
 .\publish.ps1 -Installer      # build autocontida + o instalador (precisa do Inno Setup 6)
 ```
 
-Na primeira execução ele pergunta qual pasta usar e guarda a escolha.
+Passar uma pasta como argumento pula tudo isso.
 
 ## Usando
 
@@ -150,18 +154,15 @@ rodando aparecer, na pasta daquele atalho.
 ### Ordenando
 
 O botão de ordenar no cabeçalho oferece **Manual**, **Nome (A→Z)**, **Nome (Z→A)** e
-**Mais recentes**, além de *Gravar esta ordem na pasta*.
+**Mais recentes**, além de *Fixar esta ordem*.
 
-No modo manual você arrasta os cards e o FolderHub renomeia os arquivos:
+No modo manual você arrasta os cards e a ordem vai para `%APPDATA%\FolderHub\order.json`,
+por nome de arquivo. Os arquivos da pasta não são renomeados: quando um app se atualiza e
+recria `Steam.lnk`, o atalho volta para o mesmo lugar. Atalho novo entra no fim.
 
-```
-01 - Steam.lnk        ->  Steam
-02 - Discord.lnk      ->  Discord
-03 - OBS.lnk          ->  OBS
-```
-
-O prefixo nunca aparece no card. Ordenar renomeando na mão pelo Explorer continua
-funcionando, e ele aceita `01 -`, `01.`, `01_` e `01)`.
+Pastas de versões antigas, com `01 - Steam.lnk`, são convertidas na primeira abertura: o
+prefixo sai do nome e vira ordem interna. Se a atualização de um app já tinha criado a
+duplicata (`03 - Steam.lnk` e `Steam.lnk`), o antigo vai para a Lixeira.
 
 ### Teclado
 
@@ -171,15 +172,19 @@ funcionando, e ele aceita `01 -`, `01.`, `01_` e `01)`.
 | digitar | filtra |
 | `←` `↑` `→` `↓` | navega entre os cards |
 | `Enter` | abre o card selecionado |
+| `Ctrl+Enter` | executa como administrador |
+| `Alt+Enter` | mostra na pasta |
+| `Ctrl+K` | menu de ações do atalho selecionado |
+| `Ctrl+Shift+C` | copia o caminho do atalho |
 | `Esc` | limpa a busca; se já estiver vazia, fecha |
 | `F5` | recarrega e relê os ícones |
-| `Tab` | próxima aba — desligado, só `Ctrl+Tab` troca |
+| `Tab` | próximo hub, levando a busca junto — desligado, só `Ctrl+Tab` troca |
 | `Ctrl+Tab` / `Ctrl+Shift+Tab` | próxima / aba anterior |
 | `Ctrl+1` … `Ctrl+9` | vai direto para uma aba |
 | `Ctrl+O` | troca a pasta da aba ativa |
 | botão direito num card | executar como administrador / mostrar na pasta |
-| botão direito no cabeçalho | configuração, modo residente, iniciar com o Windows |
-| duplo clique no cabeçalho | abre a pasta no Explorer |
+| botão direito na linha da busca | configuração, modo residente, iniciar com o Windows |
+| duplo clique na linha da busca | abre a pasta no Explorer |
 
 ## Ajustes
 
@@ -369,6 +374,11 @@ app/src/FolderHub/
     HubTheme.xaml           cor, forma, tipografia e medida
     HubControls.xaml        os modelos — sem literal, só tokens
     Light.xaml              as mesmas chaves, claras — carregadas sobre o escuro
+  Views/
+    HubWindow.cs            a casca comum: chrome, acrílico, Esc, fade
+    SettingsWindow.xaml     a tela de configuração
+    WelcomeWindow.xaml      a primeira execução, em três passos
+    WhatsNewWindow.xaml     o que mudou, uma vez por atualização
   Controls/                 os controles da casa: card, aba, ícone, tecla,
                             espaçamento e movimento
   Services/
@@ -378,7 +388,7 @@ app/src/FolderHub/
     PathDisplay.cs          encurta o caminho para o cabeçalho
     IconLoadQueue.cs        a thread STA dedicada que extrai os ícones
     IconLoader.cs           extração de ícone em alta resolução
-    ManualOrder.cs          grava a ordem renomeando os arquivos
+    ManualOrder.cs          a ordem manual, em order.json
     Launcher.cs             executa o atalho
     ShortcutWriter.cs       cria .lnk ao arrastar algo pra dentro
     GlobalHotKey.cs         RegisterHotKey e o parser de "Ctrl+Alt+Space"
@@ -388,6 +398,7 @@ app/src/FolderHub/
     LiveTheme.cs            tema, densidade e transparência sem reiniciar
     CardDensity.cs          os três tamanhos de card, nos pixels que o layout precisa
     ThemeMode.cs            escuro ou claro
+    ReleaseNotes.cs         os destaques da versão, para a tela de novidades
     Log.cs                  log em arquivo, para falha engolida deixar rastro
   Interop/Native.cs         DWM, Shell, GDI, user32
 app/tests/FolderHub.Tests/  xUnit
@@ -411,8 +422,8 @@ Decisões que valem citar:
 - **A altura da janela vem do conteúdo** (`SizeToContent`), com a grade em altura explícita.
   Estimar cabeçalho e rodapé em pixels depende das métricas da fonte, e errar por 2px já
   disparava o problema acima.
-- **A reordenação renomeia em duas fases**, porque o nome final de um arquivo pode ser o
-  nome atual de outro. Se algo falhar no meio, ela desfaz.
+- **A ordem manual não renomeia arquivos.** Com o prefixo `01 - `, o instalador de um app
+  recriava o atalho com o nome original e o hub mostrava dois.
 - **`ShowInTaskbar` é decidido antes do handle existir** — mudar depois faz o WPF recriar o
   HWND, e o atalho global e o hook de mensagens ficariam órfãos sem avisar.
 - **Esconder devolve a memória.** Residente e parado, o hub não precisa das páginas na

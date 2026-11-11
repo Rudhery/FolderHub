@@ -2,6 +2,104 @@
 
 Notable changes, newest first. Dates are the day the version was cut.
 
+## [Unreleased]
+
+### Search-first layout
+
+- **The search line is the top of the window.** Title and path rows are gone;
+  the placeholder names the hub ("Buscar em Trabalho"), and typing anywhere
+  lands in the search.
+- **Hubs moved to a side rail**, each with a colour by position
+  (`HubPalette`) and its initial. It replaces the tab strip and holds more hubs.
+  The rail hides in single-folder mode and the settings gear moves to the
+  search line.
+- **Icons without a tile.** The grid is a plain `ListBox` with the `LaunchCell`
+  template: the shell icon on its own, a soft fill on hover and the new
+  `Accent`/`AccentSoft` tokens on the selected item — the only colour in an
+  otherwise monochrome palette. Densities were resized for it (104×108 default).
+- **"Mais usados"**: the four most launched shortcuts of the last 30 days, from
+  `UsageStats` (`usage.json` next to the config). Hidden when the folder has
+  four shortcuts or fewer.
+- **Typing switches the grid for a result list** (`Results`), showing file name
+  and kind. The grid stays `Hidden` underneath so the window keeps its height.
+  `Tab` carries the query to the next hub.
+- **Action bar** replaces the footer: the selected shortcut, *Abrir* and an
+  actions menu (`Ctrl+K`) with run as administrator (`Ctrl+Enter`), reveal in
+  folder (`Alt+Enter`) and copy path (`Ctrl+Shift+C`).
+
+### Manual order no longer renames your shortcuts
+
+- **Dragging a card saves the order in `order.json`**, next to the config, keyed by
+  file name. It used to rename the files to `01 - Steam.lnk`; an app update then
+  recreated `Steam.lnk` and the hub showed two Steams, one more on every update.
+- Old prefixed folders are converted once: the prefix is dropped, the order kept, and
+  a duplicate an update already left behind goes to the Recycle Bin.
+- New shortcuts go to the end. *Save this order to the folder* is now *Pin this order*.
+
+### First run, and what changed after an update
+
+Two screens the app was missing at both ends of an install.
+
+- **First run is guided, in three steps**: pick the folder, set the hotkey,
+  see the hub. It was a bare Windows folder picker — it never said what the
+  folder would become, and cancelling it closed the app without a word. The two
+  settings that decide whether this works as a launcher (the global hotkey and
+  starting with Windows) were reachable only from the settings screen, which is
+  exactly where someone who just installed will not look.
+- It writes the whole config at the end rather than step by step, so giving up
+  halfway leaves nothing behind.
+- **First run and a folder that went missing are different problems**, and both
+  used to land in the same picker. A hub configured on a disconnected drive now
+  still just asks for another folder — being welcomed again would say the
+  configuration had been lost.
+- **After an update, what changed** — four highlights, once, dismissed on the
+  first click. The version comes from the assembly, so the screen cannot
+  announce a version that is not running, and `seenVersion` in the config is
+  what makes it appear exactly once. Someone who just installed does not see it:
+  the guided install already spoke.
+- The text comes from **`RELEASE_NOTES.md`**, one `## <version>` block with
+  `### Features` and `### Fix` sections, embedded in the exe at build time. The
+  same file is the GitHub release body — one text for the same person, whoever
+  downloaded the installer. Embedded rather than fetched from the releases API
+  because the screen only ever shows the notes of the version that is running,
+  and that version is this build: the network would add nothing but a request
+  the app promises not to make.
+- A tag the file does not know about still renders, with its own name and a
+  neutral icon, so inventing one breaks nothing.
+
+### Added
+
+- `HubSteps` — the progress dashes, one per step, the current one wider. The
+  number of steps is the code's business, not the screen's.
+- `HotKeyText.Parts` breaks a combination into the key names as they read on the
+  keyboard — "Space" becomes "Espaço". One way only, and deliberately: what gets
+  written to the config is still `TryFormat`'s output, because that is what
+  `GlobalHotKey.TryParse` has to read back. A test pins both sides.
+- `HubHotKeyBox` exposes those keys already knowing which is last, so the
+  template can draw them one by one without a stray `+` at the end.
+- The accent button has a disabled state — no fill, faint text. It is the only
+  filled element on a screen, and a dimmed white rectangle is still what the eye
+  goes to.
+- `FOLDERHUB_CONFIG_DIR` moves the config directory. It exists for the tests.
+
+### Fixed
+
+- **`HubSpacing.Gap` inside an `ItemsPanelTemplate` threw at runtime** —
+  "VisualTree of ItemsPanelTemplate must be a single element", in a message box,
+  on opening the app. The gap now goes on the item template, where it belongs,
+  and `HubSpacing` documents the trap.
+- The smoke tests could not have caught that: `ApplyTemplate`, and even
+  `Measure`/`Arrange` on a window with no handle, do not expand the panel of an
+  `ItemsControl`. They now call `Show()`.
+- Because those windows are real, dismissing one writes configuration — so a
+  test run rewrote the developer's own `%APPDATA%` config. The what's-new screen
+  now records the version on dismissal rather than on `Closed` (which also fires
+  for a programmatic close), and the test assembly redirects the config
+  directory.
+- A button revealed after the window was built sat flush against its neighbour:
+  `HubSpacing` computes the gap from the visible children and does not
+  recompute, which is what `HubSpacing.Refresh` is for.
+
 ## [1.1.0] — 2026-09-10
 
 ### The main window, restyled
@@ -181,5 +279,6 @@ First release.
   size without recompiling.
 - Failures are written to `%APPDATA%\FolderHub\folderhub.log`.
 
+[Unreleased]: https://github.com/Rudhery/FolderHub/compare/v1.1.0...HEAD
 [1.1.0]: https://github.com/Rudhery/FolderHub/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Rudhery/FolderHub/releases/tag/v1.0.0

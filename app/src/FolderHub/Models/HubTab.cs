@@ -32,10 +32,42 @@ public sealed class HubTab : INotifyPropertyChanged
             _customName = value;
             Notify();
             Notify(nameof(Name));
+            Notify(nameof(Initial));
+            Notify(nameof(Hint));
         }
     }
 
     public string Name => string.IsNullOrWhiteSpace(CustomName) ? FolderName : CustomName!;
+
+    /// <summary>A letra no quadradinho da barra lateral.</summary>
+    public string Initial
+    {
+        get
+        {
+            foreach (var c in Name)
+            {
+                if (char.IsLetterOrDigit(c)) return char.ToUpperInvariant(c).ToString();
+            }
+            return "•";
+        }
+    }
+
+    private Brush? _swatch;
+
+    /// <summary>A cor do hub na barra lateral. Quem dá é a posição (<see cref="Services.HubPalette"/>).</summary>
+    public Brush? Swatch
+    {
+        get => _swatch;
+        set
+        {
+            if (ReferenceEquals(_swatch, value)) return;
+            _swatch = value;
+            Notify();
+        }
+    }
+
+    /// <summary>A dica da barra lateral: nome, caminho e quantos atalhos.</summary>
+    public string Hint => $"{Name} · {Count} {(Count == 1 ? "atalho" : "atalhos")}\n{ShortPath}";
 
     public string FolderName
     {
@@ -79,6 +111,7 @@ public sealed class HubTab : INotifyPropertyChanged
             if (_count == value) return;
             _count = value;
             Notify();
+            Notify(nameof(Hint));
         }
     }
 

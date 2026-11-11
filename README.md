@@ -44,9 +44,9 @@ There is no app registry, no database, no list of programs in the source. **Drop
 shortcut in the folder and it shows up. Delete it and it's gone.** The folder you
 already curate in Explorer *is* the configuration, and the app watches it live.
 
-That constraint drives the whole design — including how ordering works: dragging a
-card renames the files with a `01 - `, `02 - ` prefix, so the order you set in the
-app is the order you see in Explorer, and vice versa.
+That constraint drives the whole design, with one deliberate exception: the order you
+drag is kept in an internal file, not in the file names, so an app that updates itself
+and recreates its shortcut does not leave a duplicate behind.
 
 ## Features
 
@@ -57,8 +57,10 @@ app is the order you see in Explorer, and vice versa.
 - **Sharp icons** — 256px through the Shell API instead of the blurry 32px most launchers settle for.
 - **Adaptive grid** — the column count and window size follow the number of shortcuts.
 - **Three card densities** — compact, default, large; the window resizes to match.
-- **Type to filter**, arrow keys to move, `Enter` to launch.
-- **Drag to reorder**, saved into the folder itself as filename prefixes.
+- **Search is the top of the window** — type and the grid turns into a result list; arrow keys and `Enter` to launch.
+- **A side rail of hubs**, each with its own colour, and **Mais usados**: the four apps you open most, at the top.
+- **Action bar** — the selected app with Open and a `Ctrl+K` menu (administrator, show in folder, copy path).
+- **Drag to reorder**, saved in an internal file — your shortcuts are never renamed.
 - **Drag and drop** — drop a folder to switch hubs, drop programs to add them.
 - **Tabs** — several folders in one hub, each loaded only when you open it.
 - **Many hubs** — one shortcut per folder, each pinnable to the taskbar.
@@ -67,8 +69,10 @@ app is the order you see in Explorer, and vice versa.
 ## Install
 
 Grab `FolderHub-Setup-x.y.z.exe` from [Releases](https://github.com/Rudhery/FolderHub/releases)
-and run it. It installs per-user, so **no admin prompt**, and offers to start with
-Windows so the hotkey is always there.
+and run it. It installs per-user, so **no admin prompt**. First run walks through
+three steps — pick the folder that becomes your hub, set the global hotkey, see
+what it found — and writes the configuration at the end, so giving up halfway
+leaves nothing behind. After an update the app shows what changed, once.
 
 > The application interface is in Portuguese only. This README is in English
 > because the code and the design notes are what a reader usually comes for;
@@ -84,7 +88,7 @@ cd FolderHub\app
 .\publish.ps1 -Installer      # self-contained build + the setup (needs Inno Setup 6)
 ```
 
-First run asks which folder to use and remembers it.
+A folder passed as an argument skips all of it.
 
 ## Using it
 
@@ -151,18 +155,15 @@ asks the running one to show itself, in the folder that shortcut points at.
 ### Ordering
 
 The sort button in the header offers **Manual**, **Name (A→Z)**, **Name (Z→A)** and
-**Most recent**, plus *Save this order to the folder*.
+**Most recent**, plus *Pin this order*.
 
-In manual mode you drag cards around, and FolderHub renames the files:
+In manual mode you drag cards around and the order goes to
+`%APPDATA%\FolderHub\order.json`, by file name. Files are never renamed: when an app
+updates and recreates `Steam.lnk`, the card goes back to its place. New shortcuts go last.
 
-```
-01 - Steam.lnk        ->  Steam
-02 - Discord.lnk      ->  Discord
-03 - OBS.lnk          ->  OBS
-```
-
-The prefix never shows on the card. Ordering by hand in Explorer still works, and
-so do `01 -`, `01.`, `01_` and `01)`.
+Folders from older versions, with `01 - Steam.lnk`, are converted on first open: the prefix
+leaves the name and becomes internal order. If an update had already left a duplicate
+(`03 - Steam.lnk` and `Steam.lnk`), the old one goes to the Recycle Bin.
 
 ### Keyboard
 
@@ -173,15 +174,19 @@ so do `01 -`, `01.`, `01_` and `01)`.
 | `/` | focus the search field |
 | `←` `↑` `→` `↓` | move between cards |
 | `Enter` | launch the selected card |
+| `Ctrl+Enter` | run as administrator |
+| `Alt+Enter` | show in folder |
+| `Ctrl+K` | actions menu for the selected shortcut |
+| `Ctrl+Shift+C` | copy the shortcut's path |
 | `Esc` | clear the search; if already empty, dismiss |
 | `F5` | reload and re-read the icons |
-| `Tab` | next tab — turn it off and only `Ctrl+Tab` switches |
+| `Tab` | next hub, carrying the search along — turn it off and only `Ctrl+Tab` switches |
 | `Ctrl+Tab` / `Ctrl+Shift+Tab` | next / previous tab |
 | `Ctrl+1` … `Ctrl+9` | jump straight to a tab |
 | `Ctrl+O` | change the active tab's folder |
 | right-click a card | run as administrator / show in folder |
-| right-click the header | resident mode, start with Windows, open the config |
-| double-click the header | open the folder in Explorer |
+| right-click the search line | resident mode, start with Windows, open the config |
+| double-click the search line | open the folder in Explorer |
 
 ## Settings
 
@@ -377,6 +382,8 @@ app/src/FolderHub/
   Views/
     HubWindow.cs            the shared shell: chrome, acrylic, Esc, fade
     SettingsWindow.xaml     the settings screen
+    WelcomeWindow.xaml      first run, in three steps
+    WhatsNewWindow.xaml     what changed, once per update
   Controls/
     HubCard.cs              the card: variants, and either tile or free content
     HubTabItem.cs           the tab capsule
@@ -389,6 +396,7 @@ app/src/FolderHub/
     HubGlyph.cs             the icon set, by name instead of codepoint
     HubToggle.cs            the switch
     HubGroup.cs             a block of settings rows: title, one line, the rows
+    HubSteps.cs             the progress dashes of a multi-step screen
     HubOption.cs            one settings row: what it is, and the control for it
     HubStepper.cs           a number with minus and plus
     HubHotKeyBox.cs         records a key combination by having you press it
@@ -409,6 +417,7 @@ app/src/FolderHub/
     LiveTheme.cs            theme, density and transparency, applied without a restart
     CardDensity.cs          the three card sizes, in the pixels window sizing needs
     ThemeMode.cs            dark or light
+    ReleaseNotes.cs         the highlights of this version, for the update screen
     Log.cs                  file log, so swallowed failures leave a trace
   Interop/Native.cs         DWM, Shell, GDI, user32
 app/tests/FolderHub.Tests/  xUnit
@@ -432,8 +441,8 @@ A few decisions worth calling out:
 - **Window height comes from the content** (`SizeToContent`) with the grid at an explicit
   height. Estimating the chrome in pixels depends on font metrics, and being 2px off was
   enough to trigger the problem above.
-- **Reordering renames in two passes**, because one file's target name can be another's
-  current name. It rolls back if anything fails midway.
+- **Manual order never renames files.** Prefixing with `01 - ` made app installers
+  recreate the shortcut under its original name, and the hub showed two.
 - **`ShowInTaskbar` is decided before the handle exists** — changing it later makes WPF
   recreate the HWND, which would silently orphan the global hotkey and the message hook.
 - **Hiding gives the memory back.** Resident and idle, the hub does not need its pages

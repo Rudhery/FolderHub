@@ -19,7 +19,7 @@ public sealed class AppItem : INotifyPropertyChanged
     /// <summary>Última escrita, para a ordenação "mais recentes".</summary>
     public required DateTime Modified { get; init; }
 
-    /// <summary>Nome do arquivo com o prefixo "01 - " — é ele que define a ordem manual.</summary>
+    /// <summary>Nome do arquivo (com extensão) — é a chave da ordem manual em order.json.</summary>
     public string FileName => System.IO.Path.GetFileName(Path);
 
     /// <summary>Rótulo curto do tipo, mostrado no card no hover.</summary>

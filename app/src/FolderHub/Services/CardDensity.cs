@@ -22,8 +22,10 @@ public static class CardDensities
     {
         // O rótulo continua com duas linhas em todas: é o que impede que um
         // nome comprido troque de altura conforme a densidade.
-        CardDensity.Compact => (132, 100, 32),
-        CardDensity.Large => (188, 138, 48),
-        _ => (160, 118, 40)
+        // Ícone solto, sem caixa em volta: a célula é pouco mais que o ícone e
+        // duas linhas de nome.
+        CardDensity.Compact => (92, 96, 36),
+        CardDensity.Large => (124, 128, 56),
+        _ => (104, 108, 44)
     };
 }

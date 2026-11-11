@@ -672,7 +672,7 @@
                                                         Unit="colunas"
                                                         ValueChanged="Columns_Changed" />
                                     </hub:HubOption>
-                                    <hub:HubOption Title="Ordenação dos cards" Description="Manual segue os prefixos dos arquivos na pasta.">
+                                    <hub:HubOption Title="Ordenação dos cards" Description="Manual segue a ordem em que você arrastou os cards.">
                                         <ComboBox x:Name="SortSelect"
                                                   Style="{StaticResource HubSelect}"
                                                   SelectionChanged="Sort_Changed" />

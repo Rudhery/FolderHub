@@ -17,6 +17,15 @@ namespace FolderHub.Controls;
 ///
 /// A margem entra em todos menos o primeiro filho visível, e só no lado do
 /// empilhamento — o que o filho já tenha nos outros lados continua valendo.
+///
+/// <para>
+/// <b>Não use dentro de um <c>ItemsPanelTemplate</c>.</b> O painel de uma
+/// <c>ItemsControl</c> nasce de um modelo, e mexer nele enquanto o modelo é
+/// instanciado faz o WPF recusar a árvore com "VisualTree de
+/// ItemsPanelTemplate deve ser um elemento único" — em tempo de execução, ao
+/// medir, não na compilação. Ali o respiro vai como <c>Margin</c> no modelo do
+/// item, que é de quem ele é afinal.
+/// </para>
 /// </summary>
 public static class HubSpacing
 {

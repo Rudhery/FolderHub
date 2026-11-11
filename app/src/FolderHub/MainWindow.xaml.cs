@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using FolderHub.Controls;
 using FolderHub.Models;
 using FolderHub.Services;
 using FolderHub.Views;
@@ -14,24 +15,25 @@ namespace FolderHub;
 
 public partial class MainWindow : HubWindow
 {
-    // Card + 5px de margem de cada lado = 10px de gap, como no design. Vem do
-    // tema para que um arquivo de tema possa mudar o tamanho dos cards.
-    // Card + 5px de margem de cada lado = 10px de gap, como no design. Sai do
-    // dicionário vivo, onde a densidade escolhida já foi aplicada por cima do
-    // que o tema pediu — assim existe uma medida só, e não duas concorrendo.
-    private double CardOuterWidth => ThemeSize("CardWidth", 160) + 10;
-    private double CardOuterHeight => ThemeSize("CardHeight", 118) + 10;
+    // Célula + 2px de margem de cada lado. Sai do dicionário vivo, onde a
+    // densidade escolhida já foi aplicada por cima do que o tema pediu — assim
+    // existe uma medida só, e não duas concorrendo.
+    private double CardOuterWidth => ThemeSize("CardWidth", 104) + 4;
+    private double CardOuterHeight => ThemeSize("CardHeight", 108) + 4;
 
     private double ThemeSize(string key, double fallback)
         => TryFindResource(key) is double value && value > 0 ? value : fallback;
 
     // Só serve para limitar a altura da grade em telas baixas; a altura real da
     // janela vem de SizeToContent, então erro de alguns pixels aqui não importa.
-    // Medido na janela real com abas: 244px de tudo que não é grade.
-    private const double ApproxChromeHeight = 244;
+    // Busca, Mais usados, cabeçalho de Todos e barra de ações.
+    private const double ApproxChromeHeight = 330;
 
-    // 3 colunas na largura do design (560px).
-    private const double MinShellWidth = 562;
+    // A busca e a barra de ações precisam de espaço mesmo numa pasta com três atalhos.
+    private const double MinShellWidth = 600;
+
+    // Barra lateral + a borda dela. Some no modo de pasta única.
+    private double RailWidth => Rail.Visibility == Visibility.Visible ? 73 : 0;
 
     private readonly ObservableCollection<AppItem> _visible = [];
 
@@ -69,11 +71,15 @@ public partial class MainWindow : HubWindow
 
         Cards.ItemsSource = _visible;
         Cards.PreviewMouseLeftButtonUp += Cards_PreviewMouseLeftButtonUp;
-        Cards.PreviewMouseRightButtonDown += Cards_PreviewMouseRightButtonDown;
+        Cards.PreviewMouseRightButtonDown += List_PreviewMouseRightButtonDown;
         Cards.PreviewMouseLeftButtonDown += Cards_PreviewMouseLeftButtonDown;
         Cards.PreviewMouseMove += Cards_PreviewMouseMove;
         Cards.DragOver += Cards_DragOver;
         Cards.Drop += Cards_Drop;
+
+        Results.ItemsSource = _visible;
+        Results.PreviewMouseLeftButtonUp += Results_PreviewMouseLeftButtonUp;
+        Results.PreviewMouseRightButtonDown += List_PreviewMouseRightButtonDown;
 
         BuildTabs(tabs);
 
@@ -142,8 +148,11 @@ public partial class MainWindow : HubWindow
         int previousCount = _all.Count;
         _animateIntro = animate;
 
+        // Pastas de versões antigas ainda têm o "01 - " no nome: vira ordem interna uma vez só.
+        ManualOrder.MigrateLegacyPrefixes(_folder);
+
         var scanned = FolderScanner.Scan(_folder);
-        FolderScanner.Sort(scanned, App.Config.Sort);
+        FolderScanner.Sort(scanned, App.Config.Sort, _folder);
 
         _iconCts.Cancel();
         _iconCts = new CancellationTokenSource();
@@ -156,6 +165,7 @@ public partial class MainWindow : HubWindow
         }
 
         UpdateHeader();
+        UpdateFrequent();
         ApplyFilter();
 
         if (resize && (_all.Count != previousCount || !IsLoaded)) ResizeToContent(_all.Count);
@@ -171,61 +181,103 @@ public partial class MainWindow : HubWindow
                 if (token.IsCancellationRequested) return;
                 _iconCache[item.Path] = icon;
                 item.Icon = icon;
+                if (ReferenceEquals(item, SelectedItem)) SelectedIcon.Source = icon;
             }),
             token);
     }
 
+    /// <summary>A lista que está na tela agora: a grade, ou os resultados enquanto se digita.</summary>
+    private ListBox ActiveList => Results.Visibility == Visibility.Visible ? Results : Cards;
+
+    private AppItem? SelectedItem => ActiveList.SelectedItem as AppItem;
+
     private void ApplyFilter()
     {
         string query = SearchBox.Text.Trim();
+        bool filtering = query.Length > 0;
 
         _visible.Clear();
         foreach (var item in ItemFilter.Apply(_all, query)) _visible.Add(item);
 
-        SearchPlaceholder.Visibility = query.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        SearchPlaceholder.Visibility = filtering ? Visibility.Collapsed : Visibility.Visible;
 
-        bool empty = _visible.Count == 0;
-        Cards.Visibility = empty ? Visibility.Collapsed : Visibility.Visible;
-        EmptyState.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
+        bool none = _visible.Count == 0;
 
-        if (empty)
+        // Hidden, e não Collapsed: a grade segura a altura da janela enquanto a
+        // lista de resultados (ou o estado vazio) aparece no mesmo espaço.
+        Browse.Visibility = !filtering && _all.Count > 0 ? Visibility.Visible : Visibility.Hidden;
+        Results.Visibility = filtering && !none ? Visibility.Visible : Visibility.Collapsed;
+        EmptyState.Visibility = none ? Visibility.Visible : Visibility.Collapsed;
+
+        if (none)
         {
-            bool filtering = query.Length > 0;
             EmptyTitle.Text = filtering ? "Nada encontrado" : "Nenhum atalho aqui";
-            EmptyHint.Text = filtering
-                ? $"Nenhum app com \"{query}\" nesta pasta."
-                : "Solte atalhos (.lnk, .url, .exe) dentro da pasta e eles aparecem aqui na hora.";
+            EmptyHint.Text = !filtering
+                ? "Solte atalhos (.lnk, .url, .exe) dentro da pasta e eles aparecem aqui na hora."
+                : _tabs.Count > 1
+                    ? $"Nenhum app com \"{query}\" em {CurrentHubName}. Tab procura no próximo hub."
+                    : $"Nenhum app com \"{query}\" nesta pasta.";
+            EmptyGlyph.Glyph = filtering ? HubGlyph.Search : HubGlyph.Folder;
+            EmptyAction.Visibility = filtering ? Visibility.Collapsed : Visibility.Visible;
         }
 
-        string count = _visible.Count == _all.Count
-            ? $"{_all.Count} {(_all.Count == 1 ? "atalho" : "atalhos")}"
-            : $"{_visible.Count} de {_all.Count}";
-
-        // Com mais de um hub o rodapé também diz em qual deles você está — é a
-        // única pista de posição quando a aba ativa rolou para fora da faixa.
-        int hub = _tab is null ? 0 : _tabs.IndexOf(_tab) + 1;
-        CountText.Text = _tabs.Count > 1 && hub > 0
-            ? $"{count} · hub {hub} de {_tabs.Count}"
-            : count;
-
+        CountText.Text = $"{_all.Count} {(_all.Count == 1 ? "atalho" : "atalhos")}";
         CountText.Visibility = App.Config.ShowCount ? Visibility.Visible : Visibility.Collapsed;
 
-        if (_visible.Count > 0) Cards.SelectedIndex = 0;
+        if (_visible.Count > 0) ActiveList.SelectedIndex = 0;
+        UpdateSelection();
     }
+
+    private string CurrentHubName => _tab?.Name ?? PathDisplay.FolderName(_folder);
 
     private void UpdateHeader()
     {
-        TitleText.Text = PathDisplay.FolderName(_folder);
-        SubtitleText.Text = PathDisplay.Shorten(_folder);
-        SubtitleText.Visibility = App.Config.ShowPath ? Visibility.Visible : Visibility.Collapsed;
-        Title = $"{TitleText.Text} — FolderHub";
+        // A busca varre só o hub aberto, e o texto dela diz qual é.
+        SearchPlaceholder.Text = $"Buscar em {CurrentHubName}";
+        Title = $"{CurrentHubName} — FolderHub";
 
-        // A busca varre só o hub aberto; dizer quantos existem evita prometer
-        // uma busca global que o app não faz.
-        SearchPlaceholder.Text = _tabs.Count > 1
-            ? $"Buscar em {_tabs.Count} hubs"
-            : "Buscar";
+        PathText.Text = PathDisplay.Shorten(_folder);
+        PathText.Visibility = App.Config.ShowPath ? Visibility.Visible : Visibility.Collapsed;
+
+        // Lembrar o atalho global só faz sentido quando ele existe: no modo residente.
+        string hotKey = App.Config.HotKey ?? string.Empty;
+        HotKeyHint.Text = string.Join(" ", HotKeyText.Parts(hotKey));
+        HotKeyHint.Visibility = App.Background && hotKey.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
+
+    /// <summary>
+    /// A fileira "Mais usados". Só aparece quando acrescenta algo: com quatro
+    /// atalhos ou menos ela repetiria a grade inteira.
+    /// </summary>
+    private void UpdateFrequent()
+    {
+        IReadOnlyList<FrequentItem> top = _all.Count > 4 ? UsageStats.Top(_all, 4) : [];
+        Frequent.ItemsSource = top;
+        FrequentSection.Visibility = top.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    /// <summary>A barra de ações mostra quem está escolhido.</summary>
+    private void UpdateSelection()
+    {
+        if (SelectedItem is { } item)
+        {
+            SelectedIcon.Visibility = Visibility.Visible;
+            SelectedIcon.Source = item.Icon;
+            SelectedIcon.Text = item.Initial;
+            SelectedName.Text = item.Name;
+            SelectedKind.Text = item.Kind;
+        }
+        else
+        {
+            SelectedIcon.Visibility = Visibility.Collapsed;
+            SelectedIcon.Source = null;
+            SelectedIcon.Text = null;
+            SelectedName.Text = string.Empty;
+            SelectedKind.Text = "nada selecionado";
+        }
+    }
+
+    private void Selection_Changed(object sender, SelectionChangedEventArgs e) => UpdateSelection();
 
     private void StartWatching()
     {
@@ -288,9 +340,9 @@ public partial class MainWindow : HubWindow
 
         var work = SystemParameters.WorkArea;
 
-        // Sem MaxWidth o WrapPanel usaria toda a largura disponível e quebraria
-        // em mais colunas do que o cálculo acima decidiu.
-        Cards.MaxWidth = cols * CardOuterWidth;
+        // Largura exata: o WrapPanel quebra nas colunas que o cálculo acima
+        // decidiu, e a grade fica alinhada com o cabeçalho "Todos".
+        Cards.Width = cols * CardOuterWidth;
 
         // Altura explícita da grade + SizeToContent: a janela fecha exatamente
         // em volta das linhas, sem depender de estimar cabeçalho e rodapé.
@@ -305,7 +357,7 @@ public partial class MainWindow : HubWindow
         // Com SizeToContent ligado, o WPF recalcula o tamanho no próximo layout e
         // descarta a largura pedida — só a primeira, aplicada antes de a janela
         // aparecer, pegava. Desligar durante a atribuição faz a mudança valer.
-        double wanted = Math.Min(Math.Max(MinShellWidth, cols * CardOuterWidth + 52), work.Width - 40);
+        double wanted = Math.Min(Math.Max(MinShellWidth, RailWidth + cols * CardOuterWidth + 30), work.Width - 40);
 
         var sizing = SizeToContent;
         SizeToContent = SizeToContent.Manual;
@@ -327,7 +379,7 @@ public partial class MainWindow : HubWindow
 
     private void AnimateShellIn() => FadeIn();
 
-    /// <summary>Entrada escalonada dos cards — dispara no Loaded de cada container.</summary>
+    /// <summary>Entrada escalonada dos ícones da grade — dispara no Loaded de cada container.</summary>
     private void Card_Loaded(object sender, RoutedEventArgs e)
     {
         if (!_animateIntro || App.Config.ReduceMotion || sender is not ListBoxItem container) return;
@@ -366,19 +418,54 @@ public partial class MainWindow : HubWindow
         Shell.BeginAnimation(OpacityProperty, fade);
     }
 
-    // ----------------------------------------------------------- interação
+    // ----------------------------------------------------------- abrir
 
     private void Launch(AppItem item)
     {
         if (!Launcher.Launch(item)) return;
+
+        // Conta para "Mais usados". Depois de abrir: se o app não abriu, não conta.
+        UsageStats.Record(item.Path);
+        if (App.Config.CloseAfterLaunch) Dismiss();
+        else UpdateFrequent();
+    }
+
+    private void RunSelectedAsAdmin()
+    {
+        if (SelectedItem is not { } item) return;
+
+        Launcher.RunAsAdmin(item);
+        UsageStats.Record(item.Path);
         if (App.Config.CloseAfterLaunch) Dismiss();
     }
 
-    private AppItem? ItemFrom(object? source)
+    private void CopyPath()
+    {
+        if (SelectedItem is not { } item) return;
+
+        try { Clipboard.SetText(item.Path); }
+        catch (Exception error) { Log.Warn("não consegui copiar o caminho", error); }
+    }
+
+    /// <summary>O menu de ações do atalho escolhido, aberto em cima do botão Ações.</summary>
+    private void OpenItemMenu()
+    {
+        if (SelectedItem is null || FindResource("ItemMenu") is not ContextMenu menu) return;
+
+        menu.PlacementTarget = ActionsButton;
+        menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Top;
+        menu.IsOpen = true;
+    }
+
+    // ----------------------------------------------------------- mouse
+
+    private AppItem? ItemFrom(object? source) => ItemFrom(source, Cards);
+
+    private static AppItem? ItemFrom(object? source, ItemsControl list)
     {
         if (source is not DependencyObject d) return null;
 
-        var container = ItemsControl.ContainerFromElement(Cards, d) as ListBoxItem;
+        var container = ItemsControl.ContainerFromElement(list, d) as ListBoxItem;
         return container?.DataContext as AppItem;
     }
 
@@ -399,10 +486,26 @@ public partial class MainWindow : HubWindow
         }
     }
 
-    private void Cards_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    private void Results_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
-        if (ItemFrom(e.OriginalSource) is { } item) Cards.SelectedItem = item;
+        if (ItemFrom(e.OriginalSource, Results) is { } item)
+        {
+            e.Handled = true;
+            Launch(item);
+        }
     }
+
+    private void List_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is ListBox list && ItemFrom(e.OriginalSource, list) is { } item) list.SelectedItem = item;
+    }
+
+    private void Frequent_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: FrequentItem frequent }) Launch(frequent.Item);
+    }
+
+    // ----------------------------------------------------------- teclado
 
     protected override void OnPreviewKeyDown(KeyEventArgs e)
     {
@@ -411,6 +514,7 @@ public partial class MainWindow : HubWindow
 
         bool ctrl = (Keyboard.Modifiers & ModifierKeys.Control) != 0;
         bool shift = (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
+        bool grid = ActiveList == Cards;
 
         switch (e.Key)
         {
@@ -420,8 +524,29 @@ public partial class MainWindow : HubWindow
                 e.Handled = true;
                 return;
 
+            case Key.Enter when ctrl:
+                RunSelectedAsAdmin();
+                e.Handled = true;
+                return;
+
             case Key.Enter:
-                if (Cards.SelectedItem is AppItem selected) Launch(selected);
+                if (SelectedItem is { } selected) Launch(selected);
+                e.Handled = true;
+                return;
+
+            // Alt+Enter chega como tecla de sistema.
+            case Key.System when e.SystemKey == Key.Enter:
+                if (SelectedItem is { } reveal) Launcher.RevealInExplorer(reveal);
+                e.Handled = true;
+                return;
+
+            case Key.K when ctrl:
+                OpenItemMenu();
+                e.Handled = true;
+                return;
+
+            case Key.C when ctrl && shift:
+                CopyPath();
                 e.Handled = true;
                 return;
 
@@ -444,8 +569,15 @@ public partial class MainWindow : HubWindow
                 e.Handled = true;
                 return;
 
+            // Tab troca de hub e leva a busca junto: não achou aqui, procura no próximo.
             case Key.Tab when ctrl || App.Config.TabSwitchesHub:
+                string query = SearchBox.Text;
                 MoveTab(shift ? -1 : 1);
+                if (query.Length > 0)
+                {
+                    SearchBox.Text = query;
+                    SearchBox.CaretIndex = query.Length;
+                }
                 e.Handled = true;
                 return;
 
@@ -454,12 +586,13 @@ public partial class MainWindow : HubWindow
                 e.Handled = true;
                 return;
 
-            case Key.Left:
+            // Na lista de resultados, esquerda e direita ficam com o cursor do texto.
+            case Key.Left when grid:
                 Move(-1);
                 e.Handled = true;
                 return;
 
-            case Key.Right:
+            case Key.Right when grid:
                 Move(1);
                 e.Handled = true;
                 return;
@@ -474,33 +607,41 @@ public partial class MainWindow : HubWindow
                 e.Handled = true;
                 return;
 
-            case Key.Home:
+            case Key.Home when grid:
                 MoveTo(0);
                 e.Handled = true;
                 return;
 
-            case Key.End:
+            case Key.End when grid:
                 MoveTo(_visible.Count - 1);
                 e.Handled = true;
                 return;
         }
+
+        // Começou a digitar com o foco em outro lugar: vai para a busca.
+        if (!SearchBox.IsKeyboardFocused && !ctrl && IsTypingKey(e.Key)) SearchBox.Focus();
     }
 
-    private int VisibleColumns() => Math.Max(1, Math.Min(_columns, _visible.Count));
+    private static bool IsTypingKey(Key key) =>
+        key is >= Key.A and <= Key.Z or >= Key.D0 and <= Key.D9 or >= Key.NumPad0 and <= Key.NumPad9;
+
+    private int VisibleColumns() => ActiveList == Results ? 1 : Math.Max(1, Math.Min(_columns, _visible.Count));
 
     private void Move(int delta)
     {
         if (_visible.Count == 0) return;
-        int index = Cards.SelectedIndex < 0 ? 0 : Cards.SelectedIndex + delta;
+        var list = ActiveList;
+        int index = list.SelectedIndex < 0 ? 0 : list.SelectedIndex + delta;
         MoveTo(index);
     }
 
     private void MoveTo(int index)
     {
         if (_visible.Count == 0) return;
+        var list = ActiveList;
         index = Math.Clamp(index, 0, _visible.Count - 1);
-        Cards.SelectedIndex = index;
-        Cards.ScrollIntoView(_visible[index]);
+        list.SelectedIndex = index;
+        list.ScrollIntoView(_visible[index]);
     }
 
     private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) => ApplyFilter();
@@ -531,6 +672,8 @@ public partial class MainWindow : HubWindow
         }
     }
 
+    // ----------------------------------------------------------- cliques
+
     private void ChangeFolder_Click(object sender, RoutedEventArgs e) => ChangeFolder();
 
     private void Reload_Click(object sender, RoutedEventArgs e)
@@ -543,17 +686,19 @@ public partial class MainWindow : HubWindow
 
     private void OpenFolder_Click(object sender, RoutedEventArgs e) => Launcher.OpenFolder(_folder);
 
-    private void RunAsAdmin_Click(object sender, RoutedEventArgs e)
+    private void Open_Click(object sender, RoutedEventArgs e)
     {
-        if (Cards.SelectedItem is AppItem item)
-        {
-            Launcher.RunAsAdmin(item);
-            if (App.Config.CloseAfterLaunch) Dismiss();
-        }
+        if (SelectedItem is { } item) Launch(item);
     }
+
+    private void Actions_Click(object sender, RoutedEventArgs e) => OpenItemMenu();
+
+    private void RunAsAdmin_Click(object sender, RoutedEventArgs e) => RunSelectedAsAdmin();
+
+    private void CopyPath_Click(object sender, RoutedEventArgs e) => CopyPath();
 
     private void Reveal_Click(object sender, RoutedEventArgs e)
     {
-        if (Cards.SelectedItem is AppItem item) Launcher.RevealInExplorer(item);
+        if (SelectedItem is { } item) Launcher.RevealInExplorer(item);
     }
 }

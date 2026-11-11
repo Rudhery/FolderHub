@@ -38,7 +38,7 @@ public sealed class HubConfig
     /// <summary>Atalho global. Ex.: "Ctrl+Alt+Space", "Alt+Q", "Win+Shift+H".</summary>
     public string HotKey { get; set; } = "Ctrl+Alt+Space";
 
-    /// <summary>Como os cards são ordenados. "Manual" segue os prefixos da pasta.</summary>
+    /// <summary>Como os cards são ordenados. "Manual" segue a ordem arrastada (order.json).</summary>
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public SortMode Sort { get; set; } = SortMode.Manual;
 
@@ -85,6 +85,15 @@ public sealed class HubConfig
     public CardDensity Density { get; set; } = CardDensity.Default;
 
     /// <summary>
+    /// A última versão cujas novidades já foram mostradas.
+    ///
+    /// Nulo é primeira instalação, e aí quem fala é a instalação guiada. Guardar
+    /// a versão vista, e não um "já mostrei", é o que faz a tela voltar a
+    /// aparecer na atualização seguinte sem precisar de outro campo.
+    /// </summary>
+    public string? SeenVersion { get; set; }
+
+    /// <summary>
     /// Quanto do desktop aparece atrás da janela, de 0 (opaca) a 100. O acrílico
     /// do Windows não expõe um nível, então isto é a opacidade da superfície que
     /// o app pinta por cima dele.
@@ -93,9 +102,19 @@ public sealed class HubConfig
 
     // ------------------------------------------------------------------
 
+    /// <summary>
+    /// Onde a configuração mora. Normalmente <c>%APPDATA%\FolderHub</c>.
+    ///
+    /// A variável <c>FOLDERHUB_CONFIG_DIR</c> troca o diretório, e existe pelos
+    /// testes: eles abrem janelas de verdade, e janela de verdade grava
+    /// configuração — apontada para a config real, uma rodada de testes apaga
+    /// os hubs de quem está desenvolvendo. Já apagou.
+    /// </summary>
     [JsonIgnore]
-    public static string Directory { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "FolderHub");
+    public static string Directory { get; } =
+        Environment.GetEnvironmentVariable("FOLDERHUB_CONFIG_DIR") is { Length: > 0 } custom
+            ? custom
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "FolderHub");
 
     [JsonIgnore]
     public static string FilePath { get; } = Path.Combine(Directory, "config.json");

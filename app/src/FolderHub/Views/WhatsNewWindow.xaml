@@ -1,0 +1,213 @@
+<views:HubWindow x:Class="FolderHub.Views.WhatsNewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:hub="clr-namespace:FolderHub.Controls"
+        xmlns:views="clr-namespace:FolderHub.Views"
+        Title="Novidades — FolderHub"
+        Width="440"
+        SizeToContent="Height"
+        Background="Transparent">
+
+    <Window.Resources>
+        <Style x:Key="NoteTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="{StaticResource SizeTab}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+        </Style>
+
+        <Style x:Key="NoteText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="{StaticResource SizeRowHint}" />
+            <Setter Property="Foreground" Value="{StaticResource TextMeta}" />
+            <Setter Property="LineHeight" Value="18" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <Style x:Key="DoneButton" TargetType="Button" BasedOn="{StaticResource AccentButton}">
+            <Setter Property="Padding" Value="14,7" />
+            <Setter Property="FontSize" Value="{StaticResource SizeRowHint}" />
+        </Style>
+    </Window.Resources>
+
+    <!--  sem acrílico, pelo canto de 18px — ver o HubWindow  -->
+    <Border x:Name="Shell"
+            Background="{StaticResource ModalSurface}"
+            BorderBrush="{StaticResource ModalBorder}"
+            BorderThickness="1"
+            CornerRadius="{StaticResource RadiusWindow}"
+            MouseLeftButtonDown="Shell_MouseLeftButtonDown">
+        <Border.RenderTransform>
+            <TranslateTransform />
+        </Border.RenderTransform>
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="60"
+                              Opacity="0.85"
+                              ShadowDepth="18"
+                              Color="Black"
+                              Direction="270" />
+        </Border.Effect>
+
+        <Grid Margin="22,24,22,18">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!--  ============ cabeçalho ============  -->
+
+            <Grid Grid.Row="0">
+                <StackPanel hub:HubSpacing.Gap="Small" Orientation="Horizontal">
+                    <Border Width="30"
+                            Height="30"
+                            Padding="6,7"
+                            VerticalAlignment="Center"
+                            BorderBrush="{StaticResource BrandBorder}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusChip}">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0.85,1">
+                                <GradientStop Offset="0" Color="{Binding Source={StaticResource BrandTileStart}, Path=Color}" />
+                                <GradientStop Offset="1" Color="{Binding Source={StaticResource BrandTileEnd}, Path=Color}" />
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <StackPanel VerticalAlignment="Center" hub:HubSpacing.Gap="None">
+                            <Border Height="3"
+                                    Margin="0,0,0,3"
+                                    Background="{StaticResource BrandBarStrong}"
+                                    CornerRadius="{StaticResource RadiusThumb}" />
+                            <Border Height="3"
+                                    Margin="0,0,4.5,3"
+                                    Background="{StaticResource BrandBar}"
+                                    CornerRadius="{StaticResource RadiusThumb}" />
+                            <Border Height="3"
+                                    Margin="0,0,9,0"
+                                    Background="{StaticResource BrandBarQuiet}"
+                                    CornerRadius="{StaticResource RadiusThumb}" />
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel VerticalAlignment="Center" hub:HubSpacing.Gap="None">
+                        <TextBlock FontSize="{StaticResource SizeInitial}"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimary}"
+                                   Text="Novidades" />
+                        <TextBlock x:Name="Subtitle"
+                                   Margin="0,2,0,0"
+                                   FontSize="{StaticResource SizeRowHint}"
+                                   Foreground="{StaticResource TextMeta}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!--  a pílula de versão, como na landing  -->
+                <Border HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Padding="9,4"
+                        Background="{StaticResource PillBg}"
+                        BorderBrush="{StaticResource PillBorder}"
+                        BorderThickness="1"
+                        CornerRadius="{StaticResource RadiusPill}">
+                    <TextBlock x:Name="VersionPill"
+                               FontFamily="{StaticResource MonoFont}"
+                               FontSize="{StaticResource SizeMeta}"
+                               Foreground="{StaticResource TextLabel}" />
+                </Border>
+            </Grid>
+
+            <!--  ============ os destaques ============  -->
+
+            <!--
+                Agrupado por etiqueta, que é o que a convenção do
+                RELEASE_NOTES.md serve para dizer: "Features" e "Fix" viram
+                seções, e uma etiqueta nova aparece com o próprio nome.
+
+                O respiro entre os itens é margem no modelo, e não
+                HubSpacing.Gap no painel: o Gap dentro de um ItemsPanelTemplate
+                faz a ItemsControl estourar em tempo de execução — ver o
+                HubSpacing.
+            -->
+            <ItemsControl x:Name="Sections"
+                          Grid.Row="1"
+                          Margin="0,18,0,0"
+                          Focusable="False">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="0,0,0,4">
+                            <TextBlock Margin="0,0,0,8"
+                                       FontFamily="{StaticResource MonoFont}"
+                                       FontSize="{StaticResource SizeKey}"
+                                       Foreground="{StaticResource TextMuted}"
+                                       Text="{Binding Label}"
+                                       TextOptions.TextFormattingMode="Display" />
+
+                            <ItemsControl Focusable="False" ItemsSource="{Binding Notes}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,6"
+                                                Padding="14,12"
+                                                Background="{StaticResource SunkenBg}"
+                                                BorderBrush="{StaticResource SunkenBorder}"
+                                                BorderThickness="1"
+                                                CornerRadius="{StaticResource RadiusRow}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <Border Grid.Column="0"
+                                                        Width="28"
+                                                        Height="28"
+                                                        Margin="0,1,12,0"
+                                                        VerticalAlignment="Top"
+                                                        Background="{StaticResource TileBg}"
+                                                        BorderBrush="{StaticResource TileBorder}"
+                                                        BorderThickness="1"
+                                                        CornerRadius="{StaticResource RadiusChip}">
+                                                    <hub:HubIcon HorizontalAlignment="Center"
+                                                                 VerticalAlignment="Center"
+                                                                 FontSize="{StaticResource SizeGlyph}"
+                                                                 Foreground="{StaticResource Glyph}"
+                                                                 Glyph="{Binding Glyph}" />
+                                                </Border>
+
+                                                <StackPanel Grid.Column="1">
+                                                    <TextBlock Style="{StaticResource NoteTitle}" Text="{Binding Title}" />
+                                                    <TextBlock Margin="0,3,0,0"
+                                                               Style="{StaticResource NoteText}"
+                                                               Text="{Binding Text}"
+                                                               Visibility="{Binding Text, Converter={StaticResource EmptyToCollapsed}}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!--  ============ rodapé ============  -->
+
+            <Border Grid.Row="2"
+                    Margin="0,10,0,0"
+                    Padding="0,14,0,0"
+                    BorderBrush="{StaticResource RowLine}"
+                    BorderThickness="0,1,0,0">
+                <Grid>
+                    <TextBlock x:Name="Trailer"
+                               VerticalAlignment="Center"
+                               FontFamily="{StaticResource MonoFont}"
+                               FontSize="{StaticResource SizeMeta}"
+                               Foreground="{StaticResource TextFaint}" />
+
+                    <Button x:Name="Done"
+                            HorizontalAlignment="Right"
+                            Click="Done_Click"
+                            Content="Continuar"
+                            Style="{StaticResource DoneButton}" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</views:HubWindow>

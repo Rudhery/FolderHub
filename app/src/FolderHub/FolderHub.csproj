@@ -12,16 +12,32 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\folderhub.ico</ApplicationIcon>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Product>FolderHub</Product>
     <Company>FolderHub</Company>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <ItemGroup>
+    <!--
+      O parser das notas de versão é interno: ele é detalhe de como o arquivo é
+      lido, não API. Os testes alcançam por aqui em vez de a classe abrir o
+      método para o mundo só para poder ser testada.
+    -->
+    <InternalsVisibleTo Include="FolderHub.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Manrope e JetBrains Mono (SIL Open Font License) embutidas no exe -->
     <Resource Include="Assets\Fonts\*.ttf" />
     <Page Update="Themes\Light.xaml" />
+
+    <!--
+      As notas de versão viajam dentro do exe. É o que mantém a promessa de não
+      fazer requisição de rede: a tela de novidades só precisa do texto da
+      versão que está rodando, e essa versão é esta compilação.
+    -->
+    <EmbeddedResource Include="..\..\..\RELEASE_NOTES.md" LogicalName="FolderHub.ReleaseNotes.md" />
   </ItemGroup>
 
 </Project>

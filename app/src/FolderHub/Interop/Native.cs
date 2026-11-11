@@ -163,6 +163,41 @@ internal static class Native
     [DllImport("shlwapi.dll", EntryPoint = "StrCmpLogicalW", CharSet = CharSet.Unicode)]
     public static extern int StrCmpLogical(string a, string b);
 
+    // ---------- Lixeira ----------
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    public struct SHFILEOPSTRUCT
+    {
+        public nint hwnd;
+        public uint wFunc;
+        public string pFrom;
+        public string? pTo;
+        public ushort fFlags;
+        [MarshalAs(UnmanagedType.Bool)] public bool fAnyOperationsAborted;
+        public nint hNameMappings;
+        public string? lpszProgressTitle;
+    }
+
+    public const uint FO_DELETE = 0x0003;
+    public const ushort FOF_SILENT = 0x0004;
+    public const ushort FOF_NOCONFIRMATION = 0x0010;
+    public const ushort FOF_ALLOWUNDO = 0x0040;
+    public const ushort FOF_NOERRORUI = 0x0400;
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    public static extern int SHFileOperation(ref SHFILEOPSTRUCT op);
+
+    /// <summary>Manda um arquivo para a Lixeira, sem diálogo. Devolve false se não deu.</summary>
+    public static bool Recycle(string path)
+    {
+        var op = new SHFILEOPSTRUCT
+        {
+            wFunc = FO_DELETE,
+            pFrom = path + '\0' + '\0',
+            fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI
+        };
+        return SHFileOperation(ref op) == 0 && !op.fAnyOperationsAborted;
+    }
+
     // ---------- Atalho global ----------
     public const int WM_HOTKEY = 0x0312;
 
